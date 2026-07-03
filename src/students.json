@@ -1,0 +1,32 @@
+[
+    {
+      "name": "Rahul Kumar",
+      "password": "1234",
+      "classId": 1,
+      "selectedSubjects": [4],
+      "gender": "Male",
+      "dob": "2008-06-15",
+      "mobile": "9876543210",
+      "parentName": "Suresh Kumar",
+      "parentContact": "9123456780",
+      "address": "Delhi",
+      "admissionDate": "2024-04-01",
+      "active": true,
+      "photo": ""
+    },
+    {
+      "name": "Ananya Sharma",
+      "password": "abcd",
+      "classId": 2,
+      "selectedSubjects": [8],
+      "gender": "Female",
+      "dob": "2007-11-22",
+      "mobile": "9988776655",
+      "parentName": "Ravi Sharma",
+      "parentContact": "9877001122",
+      "address": "Mumbai",
+      "admissionDate": "2024-04-01",
+      "active": true,
+      "photo": ""
+    }
+]
