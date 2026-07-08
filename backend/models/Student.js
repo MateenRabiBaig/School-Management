@@ -81,6 +81,10 @@ const studentSchema = new mongoose.Schema(
     }
 )
 
+studentSchema.index({ name: 1 })
+
+studentSchema.index({ classId: 1, active: 1 })
+
 studentSchema.pre("save", async function () {
     if(!this.isModified("password")) {
         return;
