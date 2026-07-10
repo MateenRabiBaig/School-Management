@@ -1,106 +1,125 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase/firebase";
 import { toast } from "react-toastify";
+import { db } from "../firebase/firebase"
+import { loginUser } from "../api/authApi"
+import { saveAuth } from "../utils/authStorage"
 
 function Login() {
-    const [name, setName] = useState("");
-    const [password, setPassword] = useState("");
-    const [role, setRole] = useState("");
-    const navigate = useNavigate();
+    const [userId, setUserId] = useState("");
+    const [password, setPassword] = useState("")
+    const [role, setRole] = useState("")
+    const [loading,setLoading] = useState(false)
+    const navigate = useNavigate()
+
+    async function handleApiLogin() {
+        const response = await loginUser({userId, password, role})
+        saveAuth(response.token, response.user)
+        toast.success(`Welcome back ${response.user.name}`)
+
+        if(response.user.role === "admin") {
+            navigate("/admin")
+            return
+        }
+
+        if(response.user.role === "student") {
+            navigate("/student")
+            return
+        }
+    }
+
+    async function handleTeacherLogin() {
+        const snapshot = await getDocs(collection(db,"teachers"))
+        let teacher = null
+        snapshot.forEach((docItem) => {
+            const data = docItem.data()
+            const teacherIdentifier = data.teacherId || data.name
+
+            if(teacherIdentifier === userId && data.password === password) {
+                teacher = { firebaseId: docItem.id, ...data }
+            }
+        })
+
+        if(!teacher) {
+            throw new Error("Invalid teacher credentials")
+        }
+        localStorage.setItem("role","teacher")
+        localStorage.setItem("user",JSON.stringify({
+            id: teacher.firebaseId,
+            name: teacher.name,
+            role: "teacher",
+            teacherId: teacherId || teacher.firebaseId,
+            photo: teacher.photo || "",
+        }))
+        localStorage.setItem("teacherId",teacher.firebaseId)
+        toast.success(`Welcome back, ${teacher.name}`)
+        navigate("/teacher")
+    }
 
     async function handleLogin() {
-        if (!role) {
-            toast.error("Please select a role");
-            return;
-        }
-        if (!name || !password) {
-            toast.error("Please enter both name and password");
-            return;
+        if(!role) {
+            toast.error("Please enter User ID and password")
+            return
         }
 
-        if (role === "admin") {
-            if (name === "admin" && password === "admin@123") {
-                localStorage.setItem("role", "admin");
-                localStorage.setItem("user", name);
-                toast.success("Admin login successful!");
-                navigate("/admin");
+        try {
+            setLoading(true)
+            if(role === "teacher") {
+                await handleTeacherLogin()
             }
             else {
-                toast.error("Invalid admin credentials");
+                await handleApiLogin()
             }
         }
-        else if (role === "student") {
-            const query = await getDocs(collection(db,"students"));
-            let found = false;
-            query.forEach((docItem)=>{
-                const data = docItem.data();
-                if(data.name === name && data.password === password) {
-                    localStorage.setItem("role", "student");
-                    localStorage.setItem("user", name);
-                    localStorage.setItem("studentId",docItem.id);
-                    found = true;
-                    toast.success(`Welcome back, ${name}!`);
-                    navigate("/student");
-                }
-            })
-            if (!found) {
-                toast.error("Invalid student credentials");
-            }
+        catch(error) {
+            toast.error(error.message)
         }
-        else {
-            const query = await getDocs(collection(db,"teachers"));
-            let found = false;
-            query.forEach((docItem)=>{
-                const data = docItem.data();
-                if(data.name === name && data.password === password) {
-                    localStorage.setItem("role", "teacher");
-                    localStorage.setItem("user", name);
-                    localStorage.setItem("teacherId",docItem.id);
-                    found = true;
-                    toast.success(`Welcome back, ${name}!`);
-                    navigate("/teacher");
-                }
-            })
-            if (!found) {
-                toast.error("Invalid teacher credentials");
-            }
+        finally {
+            setLoading(false)
         }
-    };
+    }
+
+    function handleKeyDown(event) {
+        if(event.key === "Enter") {
+            handleLogin()
+        }
+    }
 
     return (
-        <>
-            <div className="container">
+        <div className="container">
             <div className="card">
-            <h1 style={{ textAlign: "center" }}>Login</h1>
+                <h1 style={{ textAlign: "center" }}>Login</h1>
+                
+                <input
+                    placeholder="Enter User ID"
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                />
 
-            <input
-                placeholder="Enter Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-            />
+                <input
+                    type="password"
+                    placeholder="Enter Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                />
 
-            <input
-                placeholder="Enter Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-            />
+                <select value={role} onChange={(e) => setRole(e.target.value)}>
+                    <option value="">Select Role</option>
+                    <option value="admin">Admin</option>
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
+                </select>
 
-            <select onChange={(e) => setRole(e.target.value)}>
-                <option value="">Select Role</option>
-                <option value="admin">Admin</option>
-                <option value="student">Student</option>
-                <option value="teacher">Teacher</option>
-            </select>
+                <br/>
 
-            <br/>
-
-            <button onClick={handleLogin} style={{ width: "100%" }}>Login</button>
+                <button onClick={handleLogin} style={{ width: "100%" }}>Login</button>
+                {loading ? "Loggin in..." : "Login"}
             </div>
-            </div>
-        </>
+        </div>
     )
 }
 
-export default Login;
+export default Login

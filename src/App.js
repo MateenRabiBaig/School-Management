@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import StudentList from "./pages/admin/students/StudentList";
@@ -32,54 +33,65 @@ import TeacherProfile from "./pages/teacher/TeacherProfile";
 import TeacherAnnouncements from "./pages/teacher/TeacherAnnouncements";
 
 function App() {
+  const adminRoute = (element) => (
+    <ProtectedRoute allowedRoles={["admin"]}>
+      {element}
+    </ProtectedRoute>
+  );
+
+  const studentRoute = (element) => (
+    <ProtectedRoute allowedRoles={["student"]}>
+      {element}
+    </ProtectedRoute>
+  );
+
+  const teacherRoute = (element) => (
+    <ProtectedRoute allowedRoles={["teacher"]}>
+      {element}
+    </ProtectedRoute>
+  );
+
   return (
-    <>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login />}></Route>
-          <Route path="/admin" element={<AdminDashboard />}></Route>
-          <Route path="/admin/home" element={<AdminDashboard />}></Route>
-          <Route path="/admin/students" element={<StudentList />}></Route>
-          <Route path="/admin/students/add" element={<AddStudent />}></Route>
-          <Route path="/admin/students/:id" element={<StudentProfile />}></Route>
-          <Route path="/admin/attendance" element={<MarkAttendance />}></Route>
-          <Route path="/admin/attendance/records" element={<AttendanceRecords />}></Route>
-          <Route path="/admin/marks" element={<AddMarks />}></Route>
-          <Route path="/admin/marks/list" element={<MarksList />}></Route>
-          <Route path="/admin/marks/details/:studentId/:subjectId" element={<MarksDetails />}></Route>
-          <Route path="/admin/results" element={<Results />}></Route>
-          <Route path="/admin/report-cards" element={<ReportCards />}></Route>
-          <Route path="/admin/report-card/:studentId" element={<ReportCardDetails />}></Route>
-          <Route path="/admin/teachers" element={<TeacherList />}></Route>
-          <Route path="/admin/teachers/add" element={<AddTeacher />}></Route>
-          <Route path="/admin/teachers/:id" element={<AdminTeacherProfile />}></Route>
-          <Route path="/admin/announcements" element={<Announcements />}></Route>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
 
-          <Route path="/student" element={<StudentDashboard />}></Route>
-          <Route path="/student/home" element={<StudentDashboard />}></Route>
-          <Route path="/student/profile" element={<MyProfile />}></Route>
-          <Route path="/student/subjects" element={<MySubjects />}></Route>
-          <Route path="/student/attendance" element={<MyAttendance />}></Route>
-          <Route path="/student/results" element={<MyResults />}></Route>
-          <Route path="/student/report-card" element={<MyReportCard />}></Route>
-          <Route path="/student/student-announcements" element={<StudentAnnouncements />}></Route>
+        <Route path="/admin" element={adminRoute( <AdminDashboard /> )} />
+        <Route path="/admin/home" element={adminRoute( <AdminDashboard /> )} />
+        <Route path="/admin/students" element={adminRoute( <StudentList /> )} />
+        <Route path="/admin/students/add" element={adminRoute( <AddStudent /> )} />
+        <Route path="/admin/students/:id" element={adminRoute( <StudentProfile /> )} />
+        <Route path="/admin/attendance" element={adminRoute( <MarkAttendance /> )} />
+        <Route path="/admin/attendance/records" element={adminRoute( <AttendanceRecords /> )} />
+        <Route path="/admin/marks" element={adminRoute( <AddMarks /> )} />
+        <Route path="/admin/marks/list" element={adminRoute( <MarksList /> )} />
+        <Route path="/admin/marks/details/:studentId/:subjectId" element={adminRoute( <MarksDetails /> )} />
+        <Route path="/admin/results" element={adminRoute( <Results /> )} />
+        <Route path="/admin/report-cards" element={adminRoute( <ReportCards /> )} />
+        <Route path="/admin/report-card/:studentId" element={adminRoute( <ReportCardDetails /> )} />
+        <Route path="/admin/teachers" element={adminRoute( <TeacherList /> )}/>
+        <Route path="/admin/teachers/add" element={adminRoute( <AddTeacher /> )} />
+        <Route path="/admin/teachers/:id" element={adminRoute( <AdminTeacherProfile /> )} />
+        <Route path="/admin/announcements" element={adminRoute( <Announcements /> )} />
 
-          
-          {/* <Route path="/manageStudents" element={<ManageStudents />}></Route>
-          <Route path="/manageAttendance" element={<ManageAttendance />}></Route>
-          <Route path="/manageMarks" element={<ManageMarks />}></Route> */}
-
-          <Route path="/teacher" element={<TeacherDashboard />}></Route>
-          <Route path="/teacher/classes" element={<TeacherClasses />}></Route>
-          <Route path="/teacher/students" element={<TeacherStudents />}></Route>
-          <Route path="/teacher/attendance" element={<TeacherAttendance />}></Route>
-          <Route path="/teacher/marks" element={<TeacherMarks />}></Route>
-          <Route path="/teacher/profile" element={<TeacherProfile />}></Route>
-          <Route path="/teacher/announcements" element={<TeacherAnnouncements />}></Route>
+        <Route path="/student" element={studentRoute( <StudentDashboard /> )} />
+        <Route path="/student/home" element={studentRoute( <StudentDashboard /> )} />
+        <Route path="/student/profile" element={studentRoute( <MyProfile /> )} />
+        <Route path="/student/subjects" element={studentRoute( <MySubjects /> )} />
+        <Route path="/student/attendance" element={studentRoute( <MyAttendance /> )} />
+        <Route path="/student/results" element={studentRoute( <MyResults /> )} />
+        <Route path="/student/report-card" element={studentRoute( <MyReportCard /> )} />
+        <Route path="/student/student-announcements" element={studentRoute( <StudentAnnouncements /> )} />
         
-        </Routes>
-      </BrowserRouter>
-    </>
+        <Route path="/teacher" element={teacherRoute( <TeacherDashboard /> )} />
+        <Route path="/teacher/classes" element={teacherRoute( <TeacherClasses /> )} />
+        <Route path="/teacher/students" element={teacherRoute( <TeacherStudents /> )} />
+        <Route path="/teacher/attendance" element={teacherRoute( <TeacherAttendance /> )} />
+        <Route path="/teacher/marks" element={teacherRoute( <TeacherMarks /> )} />
+        <Route path="/teacher/profile" element={teacherRoute( <TeacherProfile /> )} />
+        <Route path="/teacher/announcements" element={teacherRoute( <TeacherAnnouncements /> )} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
