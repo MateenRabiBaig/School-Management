@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
-import { addDoc, collection } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
-import { db } from "../../../firebase/firebase";
-import { Classes, Subjects } from "../../../data/data";
 import Navbar from "../../../components/Navbar";
+import { Classes, Subjects } from "../../../data/data";
+import { createStudent } from "../../../api/studentApi";
+import getNavbarUser from "../../../utils/getNavbarUser";
 import { toast } from "react-toastify";
 
 const initialForm = {
@@ -20,21 +20,45 @@ const initialForm = {
   address: "",
   admissionDate: "",
   active: true,
-  photo: "",
 };
 
 function AddStudent() {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [form, setForm] = useState(initialForm);
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
-
-  const selectedClass = useMemo(
-    () => Classes.find((item) => item.id === Number(form.classId)),
-    [form.classId]
-  );
+  const navbarUser = getNavbarUser();
+  const selectedClass = useMemo(() => Classes.find((item) => item.id === Number(form.classId)), [form.classId]);
 
   function getSubjectName(id) {
     return Subjects.find((item) => item.id === Number(id))?.name || "-";
+  }
+
+  function updateField(name, value) {
+    setForm((previousForm) => ({
+      ...previousForm,
+      [name]: value,
+    }));
+  }
+
+  function selectOptionalSubject(groupSubjects, subjectId) {
+    setForm((previousForm) => {
+      const currentSubjects = previousForm.selectedSubjects.map(Number);
+      const withoutCurrentGroup = currentSubjects.filter((id) => !groupSubjects.includes(id));
+
+      return {
+        ...previousForm,
+        selectedSubjects: [...withoutCurrentGroup, subjectId],
+      };
+    });
+  }
+
+  function handleClassChange(classId) {
+    setForm((previousForm) => ({
+      ...previousForm,
+      classId,
+      selectedSubjects: [],
+    }));
   }
 
   async function handleSubmit() {
@@ -42,48 +66,38 @@ function AddStudent() {
       toast.error("Please fill in all required fields");
       return;
     }
-    try {
-      await addDoc(collection(db, "students"), {
-        ...form,
-        classId: Number(form.classId),
-        active: Boolean(form.active),
-        selectedSubjects: form.selectedSubjects.map(Number),
-      });
-      toast.success("Student added successfully!");
-      navigate("/admin/students");
-    } catch (error) {
-      toast.error("Error adding student: " + error.message);
-    }
-  }
 
-  function updateField(name, value) {
-    setForm((prev) => ({ ...prev, [name]: value }));
-  }
-
-  function handlePhotoChange(file) {
-    if (!file) {
-      updateField("photo", "");
+    if (form.password.length < 6) {
+      toast.error("Password must contain at least 6 characters");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => updateField("photo", reader.result);
-    reader.readAsDataURL(file);
-  }
+    try {
+      setSaving(true);
 
-  function toggleSubject(subjectId) {
-    setForm((prev) => {
-      const current = prev.selectedSubjects.map(Number);
-      const next = current.includes(subjectId) ? current.filter((item) => item !== subjectId) : [...current, subjectId];
-      return { ...prev, selectedSubjects: next };
-    });
+      await createStudent({
+        ...form,
+        classId: Number(form.classId),
+        selectedSubjects: form.selectedSubjects.map(Number),
+      });
+
+      toast.success("Student added successfully!");
+      navigate("/admin/students");
+    }
+    catch (error) {
+      toast.error("Error adding student: " + error.message);
+    }
+    finally {
+      setSaving(false);
+    }
   }
 
   return (
     <div className="wrapper">
-            <Sidebar isOpen={sidebarOpen} />
-            <div className="main">
-                <Navbar title="Add Student" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+      <Sidebar isOpen={sidebarOpen} />
+
+      <div className="main">
+        <Navbar title="Add Student" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
 
         <div className="page-header">
           <div>
@@ -94,52 +108,38 @@ function AddStudent() {
 
         <div className="form-card">
           <div className="student-form-top">
-            <label className="photo-upload-card">
-              <input
-                type="file"
-                accept="image/*"
-                className="photo-upload-input"
-                onChange={(e) => handlePhotoChange(e.target.files?.[0])}
-              />
-              <div className="photo-upload-preview">
-                {form.photo ? (
-                  <img src={form.photo} alt="Student preview" />
-                ) : (
-                  <div className="photo-upload-placeholder">
-                    Choose Photo
-                  </div>
-                )}
-              </div>
-              <span>Upload Photo</span>
-            </label>
-
             <div className="student-top-fields">
-              <input placeholder="Name" value={form.name} onChange={(e) => updateField("name", e.target.value)} />
-              <input placeholder="Password" value={form.password} onChange={(e) => updateField("password", e.target.value)} />
+              <input placeholder="Name" value={form.name} onChange={(event) => updateField("name", event.target.value)} />
+              <input type="password" placeholder="Password" value={form.password} onChange={(event) => updateField("password", event.target.value)} />
             </div>
           </div>
 
           <div className="student-form-bottom">
-            <select value={form.classId} onChange={(e) => updateField("classId", e.target.value)}>
+            <select value={form.classId} onChange={(event) => handleClassChange(event.target.value)}>
               <option value="">Select Class</option>
               {Classes.map((item) => (
-                <option key={item.id} value={item.id}>{item.name}</option>
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
               ))}
             </select>
-            <select value={form.gender} onChange={(e) => updateField("gender", e.target.value)}>
+
+            <select value={form.gender} onChange={(event) => updateField("gender", event.target.value)}>
               <option value="">Select Gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
               <option value="Other">Other</option>
             </select>
-            <input type="date" value={form.dob} onChange={(e) => updateField("dob", e.target.value)} />
-            <input placeholder="Mobile" value={form.mobile} onChange={(e) => updateField("mobile", e.target.value)} />
-            <input placeholder="Parent Name" value={form.parentName} onChange={(e) => updateField("parentName", e.target.value)} />
-            <input placeholder="Parent Contact" value={form.parentContact} onChange={(e) => updateField("parentContact", e.target.value)} />
-            <input placeholder="Admission Date" type="date" value={form.admissionDate} onChange={(e) => updateField("admissionDate", e.target.value)} />
-            <textarea placeholder="Address" value={form.address} onChange={(e) => updateField("address", e.target.value)} />
+
+            <input type="date" value={form.dob} onChange={(event) => updateField("dob", event.target.value)} />
+            <input placeholder="Mobile" value={form.mobile} onChange={(event) => updateField("mobile", event.target.value)} />
+            <input placeholder="Parent Name" value={form.parentName} onChange={(event) => updateField("parentName", event.target.value)} />
+            <input placeholder="Parent Contact" value={form.parentContact} onChange={(event) => updateField("parentContact", event.target.value)} />
+            <input type="date" value={form.admissionDate} onChange={(event) => updateField("admissionDate", event.target.value)} />
+            <textarea placeholder="Address" value={form.address} onChange={(event) => updateField("address", event.target.value)} />
+
             <label className="checkbox-row">
-              <input type="checkbox" checked={form.active} onChange={(e) => updateField("active", e.target.checked)} />
+              <input type="checkbox" checked={form.active} onChange={(event) => updateField("active", event.target.checked)} />
               Active
             </label>
           </div>
@@ -151,27 +151,40 @@ function AddStudent() {
                 <div>
                   <h4>Compulsory</h4>
                   {selectedClass.compulsorySubjects.map((id) => (
-                    <div key={id} className="subject-pill">{getSubjectName(id)}</div>
+                    <div key={id} className="subject-pill">
+                      {getSubjectName(id)}
+                    </div>
                   ))}
                 </div>
                 <div>
                   <h4>Optional</h4>
-                  {selectedClass.optionalSubjects[0].subjects.map((id) => (
-                    <label key={id} className="subject-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={form.selectedSubjects.map(Number).includes(id)}
-                        onChange={() => toggleSubject(id)}
-                      />
-                      {getSubjectName(id)}
-                    </label>
+
+                  {selectedClass.optionalSubjects.map((group) => (
+                    <div key={group.groupName}>
+                      <p>{group.groupName}</p>
+
+                      {group.subjects.map((id) => (
+                        <label key={id} className="subject-checkbox">
+                          <input
+                            type="radio"
+                            name={`optional-${group.groupName}`}
+                            checked={form.selectedSubjects.includes(id)}
+                            onChange={() => selectOptionalSubject(group.subjects, id)}
+                          />
+
+                          {getSubjectName(id)}
+                        </label>
+                      ))}
+                    </div>
                   ))}
                 </div>
               </div>
             </div>
           )}
 
-          <button onClick={handleSubmit}>Save Student</button>
+          <button onClick={handleSubmit} disabled={saving}>
+            {saving ? "Saving..." : "Save Student"}
+          </button>
         </div>
       </div>
     </div>
