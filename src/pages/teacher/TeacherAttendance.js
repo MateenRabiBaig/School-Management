@@ -1,173 +1,204 @@
 import { useEffect, useState } from "react";
-import { addDoc, collection, getDocs } from "firebase/firestore";
 import Sidebar from "../../components/Sidebar";
-import { db } from "../../firebase/firebase";
-import { Classes } from "../../data/data";
 import Navbar from "../../components/Navbar";
+import { Classes } from "../../data/data";
+import { getMyTeacherProfile } from "../../api/teacherApi";
+import { getStudents } from "../../api/studentApi";
+import { markAttendance } from "../../api/attendanceApi";
+import { toast } from "react-toastify";
+import getNavbarUser from "../../utils/getNavbarUser";
 
 function TeacherAttendance() {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [teacher, setTeacher] = useState(null);
-    const [students, setStudents] = useState([]);
-    const [attendance, setAttendance] = useState([]);
-    const [selectedClass, setSelectedClass] = useState("");
-    const today = new Date().toISOString().slice(0, 10);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [teacher, setTeacher] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [attendance, setAttendance] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const navbarUser = getNavbarUser();
 
-    async function loadData() {
-        const teacherId = localStorage.getItem("teacherId");
-        const teacherSnapshot = await getDocs(collection(db, "teachers"));
-        let teacherData = null;
+  useEffect(() => {
+    async function loadTeacherAndStudents() {
+      try {
+        setLoading(true);
 
-        teacherSnapshot.forEach((doc) => {
-            if (doc.id === teacherId) {
-                teacherData = {
-                    firebaseId: doc.id,
-                    ...doc.data()
-                };
-            }
-        });
+        const teacherResponse = await getMyTeacherProfile();
+        const currentTeacher = teacherResponse.teacher || null;
+        setTeacher(currentTeacher);
 
-        setTeacher(teacherData);
+        const classId = currentTeacher?.assignedClasses?.[0] || "";
+        setSelectedClass(classId ? String(classId) : "");
 
-        if (teacherData && teacherData.classIds && teacherData.classIds.length > 0) {
-            setSelectedClass(teacherData.classIds[0]);
+        if (classId) {
+          const response = await getStudents({
+            classId,
+          });
+
+          setStudents(response.students || []);
+        } else {
+          setStudents([]);
         }
+      }
+      catch (error) {
+        toast.error("Error loading attendance data: " + error.message);
+      }
+      finally {
+        setLoading(false);
+      }
+    }
 
-        const studentSnapshot = await getDocs(collection(db, "students"));
-        const studentRows = [];
+    loadTeacherAndStudents();
+  }, []);
 
-        studentSnapshot.forEach((doc) => {
-            studentRows.push({
-                firebaseId: doc.id,
-                ...doc.data()
-            });
+  useEffect(() => {
+    async function loadStudents() {
+      if (!selectedClass) {
+        setStudents([]);
+        setAttendance({});
+        return;
+      }
+
+      try {
+        const response = await getStudents({
+          classId: selectedClass,
         });
 
-        setStudents(studentRows);
-
-        const attendanceSnapshot = await getDocs(collection(db, "attendance"));
-        const attendanceRows = [];
-
-        attendanceSnapshot.forEach((doc) => {
-            attendanceRows.push({
-                firebaseId: doc.id,
-                ...doc.data()
-            });
-        });
-        setAttendance(attendanceRows);
+        setStudents(response.students || []);
+        setAttendance({});
+      } catch (error) {
+        toast.error("Error loading students: " + error.message);
+      }
     }
 
-    useEffect(() => {
-        loadData();
-    }, []);
+    if (teacher) {
+      loadStudents();
+    }
+  }, [selectedClass, teacher]);
 
-    function isMarked(studentId) {
-        return attendance.find((item) =>
-                item.studentId === studentId &&
-                item.date === today
-        );
+  function updateAttendance(studentId, status) {
+    setAttendance((previous) => ({
+      ...previous,
+      [studentId]: status,
+    }));
+  }
+
+  async function handleSave() {
+    if (!selectedClass) {
+      toast.error("Please select a class");
+      return;
     }
 
-    function getClassName(id) {
-        return Classes.find((item) => item.id === Number(id))?.name || "-";
+    try {
+      setSaving(true);
+
+      const records = students.map((student) => ({
+        studentId: student.id,
+        status: attendance[student.id] || "Absent",
+      }));
+
+      await markAttendance({
+        attendanceDate: selectedDate,
+        records,
+      });
+
+      toast.success("Attendance saved successfully!");
     }
-
-    const filteredStudents = students.filter((student) => Number(student.classId) === Number(selectedClass));
-
-    async function markAttendance(studentId, status) {
-        const alreadyMarked = isMarked(studentId);
-        if (alreadyMarked) {
-            return;
-        }
-
-        await addDoc(collection(db, "attendance"),{
-                studentId,
-                date: today,
-                status
-            }
-        );
-        loadData();
+    catch (error) {
+      toast.error("Error marking attendance: " + error.message);
     }
-
-    if (!teacher) {
-        return (
-            <div className="wrapper">
-                <Sidebar isOpen={sidebarOpen} />
-                <div className="main">
-                    <Navbar title="Mark Attendance" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
-                    <h2>Loading Details</h2>
-                </div>
-            </div>
-        );
+    finally {
+      setSaving(false);
     }
+  }
 
+  function getClassName(id) {
+    return Classes.find((item) => item.id === Number(id))?.name || "-";
+  }
+
+  if (loading) {
     return (
-        <div className="wrapper">
-            <Sidebar isOpen={sidebarOpen} />
-            <div className="main">
-                <Navbar title="Mark Attendance" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
-                <div className="page-header">
-                    <div>
-                        <h2>Mark Attendance</h2>
-                        <p>
-                            Attendance for {today}
-                        </p>
-                    </div>
-                </div>
-                <div className="panel">
-                    <div style={{ marginBottom: "20px" }}>
-                        <label>Select Class</label>
-
-                        <br />
-
-                        <select value={selectedClass} onChange={(e) => setSelectedClass(Number(e.target.value))}>
-                            {teacher.classIds.map((classId) => (
-                                        <option key={classId} value={classId}>{getClassName(classId)}</option>
-                                    )
-                                )
-                            }
-                        </select>
-                    </div>
-                    {filteredStudents.length === 0 && (
-                            <h3>No Students Found</h3>
-                        )
-                    }
-                    {filteredStudents.map(
-                            (student) => {
-                                const result = isMarked(student.firebaseId);
-
-                                return (
-                                    <div className="attendance-row" key={student.firebaseId}>
-                                        <div>
-                                            <strong>{student.name}</strong>
-                                            <br />
-                                            <small>Student ID : {student.id}</small>
-                                        </div>
-                                        {result ? (
-                                                <span className={`status-pill ${result.status.toLowerCase()}`}>
-                                                    {result.status}
-                                                </span>
-                                            ) : (
-                                                <div>
-                                                    <button onClick={() => markAttendance(student.firebaseId,"Present")}>
-                                                        Present
-                                                    </button>
-
-                                                    <button onClick={() => markAttendance(student.firebaseId,"Absent")} style={{ marginLeft: "10px" }}>
-                                                        Absent
-                                                    </button>
-                                                </div>
-                                            )
-                                        }
-                                    </div>
-                                );
-                            }
-                        )
-                    }
-                </div>
-            </div>
+      <div className="wrapper">
+        <Sidebar isOpen={sidebarOpen} />
+        <div className="main">
+          <Navbar title="Mark Attendance" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+          <div className="panel">Loading details...</div>
         </div>
-    )
+      </div>
+    );
+  }
+
+  return (
+    <div className="wrapper">
+      <Sidebar isOpen={sidebarOpen} />
+      <div className="main">
+        <Navbar title="Mark Attendance" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+
+        <div className="page-header">
+          <div>
+            <h2>Mark Attendance</h2>
+            <p>Attendance for {selectedDate}</p>
+          </div>
+        </div>
+
+        <div className="form-card">
+          <div className="student-form-bottom">
+            <input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
+
+            <select value={selectedClass} onChange={(event) => setSelectedClass(event.target.value)}>
+              <option value="">Select Class</option>
+              {(teacher?.assignedClasses || []).map((classId) => (
+                <option key={classId} value={classId}>
+                  {getClassName(classId)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {students.length === 0 ? (
+            <div className="panel">No students found</div>
+          ) : (
+            <div className="table-card">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {students.map((student) => (
+                    <tr key={student.id}>
+                      <td>{student.studentId || "-"}</td>
+                      <td>{student.name || "-"}</td>
+                      <td>{attendance[student.id] || "Absent"}</td>
+                      <td>
+                        <button onClick={() => updateAttendance(student.id, "Present")}>
+                          Present
+                        </button>
+
+                        <button onClick={() => updateAttendance(student.id, "Absent")}>
+                          Absent
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <button onClick={handleSave} disabled={saving || !selectedClass}>
+            {saving ? "Saving..." : "Save Attendance"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default TeacherAttendance;

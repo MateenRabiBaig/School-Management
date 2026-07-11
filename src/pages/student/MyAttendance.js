@@ -1,64 +1,74 @@
+import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase/firebase";
-import { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar";
+import { getStudentAttendance } from "../../api/attendanceApi";
+import { toast } from "react-toastify";
+import getNavbarUser from "../../utils/getNavbarUser";
 
 function MyAttendance() {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [attendance, setAttendance] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [attendance, setAttendance] = useState([]);
+  const navbarUser = getNavbarUser();
+  const userId = navbarUser?.id;
 
-    async function getAttendance() {
-        const studentId = localStorage.getItem("studentId");
-        const result = await getDocs(collection(db,"attendance"));
-        const temp = [];
+  useEffect(() => {
+    async function loadAttendance() {
+      if (!userId) {
+        return;
+      }
 
-        result.forEach(doc=>{
-            const data = doc.data();
-            if(data.studentId === studentId) {
-                temp.push(data);
-            }
-        })
-        setAttendance(temp);
+      try {
+        const response = await getStudentAttendance(userId);
+        setAttendance(response.attendance || []);
+      }
+      catch (error) {
+        toast.error("Error loading attendance: " + error.message);
+      }
     }
 
-    useEffect(()=>{
-        getAttendance();
-    },[]);
+    loadAttendance();
+  }, [userId]);
 
-    return (
-        <div className="wrapper">
-            <Sidebar isOpen={sidebarOpen} />
-            <div className="main">
-                <Navbar title="My Attendance" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+  const presentCount = attendance.filter((item) => item.status === "Present").length;
+  const attendancePercentage = attendance.length ? (presentCount / attendance.length) * 100 : 0;
 
-                <div className="page-header">
-                    <div>
-                        <h2>My Attendance</h2>
-                        <p>Your attendance history</p>
-                    </div>
-                </div>
-                <div className="table-card">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {attendance.map((item,index)=>(
-                                <tr key={index}>
-                                    <td>{item.date}</td>
-                                    <td>{item.status}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+  return (
+    <div className="wrapper">
+      <Sidebar isOpen={sidebarOpen} />
+      <div className="main">
+        <Navbar title="My Attendance" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+
+        <div className="page-header">
+          <div>
+            <h2>My Attendance</h2>
+            <p>Attendance {attendancePercentage.toFixed(0)}%</p>
+          </div>
         </div>
-    )
+
+        <div className="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {attendance.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.attendanceDate ? String(item.attendanceDate).slice(0, 10) : "-"}</td>
+                  <td>{item.status}</td>
+                  <td>{item.remarks || "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default MyAttendance;
