@@ -1,161 +1,301 @@
-import { useEffect, useState } from "react";
-import { addDoc, collection, getDocs } from "firebase/firestore";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+
 import Sidebar from "../../../components/Sidebar";
-import { db } from "../../../firebase/firebase";
-import { Classes, Subjects } from "../../../data/data";
 import Navbar from "../../../components/Navbar";
+import { Classes, Subjects } from "../../../data/data";
+import { getStudents, getStudentById } from "../../../api/studentApi";
+import { getMarksById, saveMarks } from "../../../api/marksApi";
+import getNavbarUser from "../../../utils/getNavbarUser";
 import { toast } from "react-toastify";
 
 function AddMarks() {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [selectedClass, setSelectedClass] = useState("");
   const [students, setStudents] = useState([]);
-  const [marks, setMarks] = useState([]);
-  const [inputMarks, setInputMarks] = useState({});
-  const [examTypes, setExamTypes] = useState({});
+  const [selectedStudent, setSelectedStudent] = useState("");
+  const [studentData, setStudentData] = useState(null);
+  const [examType, setExamType] = useState("");
+  const [academicYear, setAcademicYear] = useState("2026-27");
+  const [remarks, setRemarks] = useState("");
+  const [subjects, setSubjects] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  async function loadData() {
+  const [searchParams] = useSearchParams();
+  const navbarUser = getNavbarUser();
+  const editId = searchParams.get("id");
+
+  async function loadStudents(classId) {
+    if (!classId) {
+      setStudents([]);
+      setSelectedStudent("");
+      setStudentData(null);
+      setSubjects([]);
+      return;
+    }
+
     try {
-      const studentSnapshot = await getDocs(collection(db, "students"));
-      const marksSnapshot = await getDocs(collection(db, "marks"));
-      const studentRows = [];
-      const markRows = [];
+      const response = await getStudents({
+        classId,
+      });
 
-      studentSnapshot.forEach((item) => studentRows.push({ firebaseId: item.id, ...item.data() }));
-      marksSnapshot.forEach((item) => markRows.push({ firebaseId: item.id, ...item.data() }));
-
-      setStudents(studentRows);
-      setMarks(markRows);
+      setStudents(response.students || []);
     } catch (error) {
-      toast.error("Error loading data: " + error.message);
+      toast.error(error.message);
+    }
+  }
+
+  async function selectStudent(id) {
+    if (!id) {
+      setStudentData(null);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await getStudentById(id);
+      setStudentData(response.student);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!studentData) {
+      setSubjects([]);
+      return;
+    }
+
+    const classData = Classes.find((item) => item.id === Number(studentData.classId));
+
+    if (!classData) {
+      setSubjects([]);
+      return;
+    }
+
+    const studentSubjects = [
+      ...classData.compulsorySubjects,
+      ...(Array.isArray(studentData.selectedSubjects) ? studentData.selectedSubjects : []),
+    ];
+
+    const uniqueSubjects = [...new Set(studentSubjects)];
+
+      setSubjects(
+        uniqueSubjects.map((id) => ({
+          subjectId: id,
+          marks: "",
+          maxMarks: 100,
+        }))
+      );
+  }, [studentData]);
+
+  useEffect(() => {
+    async function loadExistingMarks() {
+      if (!editId) {
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const response = await getMarksById(editId);
+        const marksData = response.marks;
+
+        setSelectedClass(marksData.student?.classId ? String(marksData.student.classId) : "");
+        setSelectedStudent(marksData.student?._id || marksData.student?.id || "");
+        setExamType(marksData.examType || "");
+        setAcademicYear(marksData.academicYear || "2026-27");
+        setRemarks(marksData.remarks || "");
+        setStudentData(marksData.student || null);
+        setSubjects(
+          (marksData.subjects || []).map((subject) => ({
+            subjectId: subject.subjectId,
+            marks: subject.marks,
+            maxMarks: subject.maxMarks || 100,
+          }))
+        );
+      } catch (error) {
+        toast.error("Error loading marks: " + error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadExistingMarks();
+  }, [editId]);
+
+  function updateMarks(index, field, value) {
+    setSubjects((previous) => {
+      const updated = [...previous];
+
+      updated[index] = {
+        ...updated[index],
+        [field]: Number(value),
+      };
+
+      return updated;
+    });
+  }
 
   function getSubjectName(id) {
     return Subjects.find((item) => item.id === Number(id))?.name || "-";
   }
 
-  function getStudentSubjects(student) {
-    const classData = Classes.find((item) => item.id === Number(student.classId));
-    const compulsory = classData ? classData.compulsorySubjects : [];
-    const optional = Array.isArray(student.selectedSubjects) ? student.selectedSubjects : [];
-    return [...new Set([...compulsory, ...optional])];
-  }
+  const selectedStudentName = useMemo(
+    () => students.find((student) => student.id === selectedStudent)?.name || "",
+    [students, selectedStudent]
+  );
 
-  async function saveMarks(studentId, subjectId) {
-    const key = `${studentId}-${subjectId}`;
-    const marksValue = inputMarks[key];
-    const examType = examTypes[key] || "Test 1";
-
-    if (marksValue === undefined || marksValue === "") {
-      toast.error("Please enter marks");
+  async function handleSave() {
+    if (!selectedStudent || !examType || !academicYear) {
+      toast.error("Please fill all required fields");
       return;
     }
 
     try {
-      await addDoc(collection(db, "marks"), {
-        studentId,
-        subjectId,
+      setSaving(true);
+
+      await saveMarks({
+        studentId: selectedStudent,
         examType,
-        marks: Number(marksValue),
+        academicYear,
+        subjects,
+        remarks,
       });
-      const student = students.find(s => s.firebaseId === studentId);
-      const subjectName = getSubjectName(subjectId);
-      toast.success(`Marks saved for ${student?.name || 'student'} - ${subjectName}`);
-      setInputMarks((prev) => ({ ...prev, [key]: "" }));
-      loadData();
+
+      toast.success("Marks saved successfully.");
     } catch (error) {
       toast.error("Error saving marks: " + error.message);
+    } finally {
+      setSaving(false);
     }
-  }
-
-  function getClassName(id) {
-    return Classes.find((item) => item.id === Number(id))?.name || "-";
   }
 
   return (
     <div className="wrapper">
-            <Sidebar isOpen={sidebarOpen} />
-            <div className="main">
-                <Navbar title="Add Marks" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+      <Sidebar isOpen={sidebarOpen} />
+
+      <div className="main">
+        <Navbar title="Add Marks" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
 
         <div className="page-header">
           <div>
-            <h2>Add Marks</h2>
-            <p>Store marks in the existing marks collection.</p>
+            <h2>{editId ? "Edit Marks" : "Add Marks"}</h2>
+            <p>Select a class, student, exam and enter marks</p>
           </div>
         </div>
 
-        <div className="marks-layout">
-          <div className="marks-entry-panel">
-            {students.map((student) => (
-              <div className="student-card" key={student.firebaseId}>
-                <h4>{student.name}</h4>
-                {getStudentSubjects(student).map((subjectId) => {
-                  const key = `${student.firebaseId}-${subjectId}`;
-                  return (
-                    <div className="subject-row" key={subjectId}>
-                      <span>{getSubjectName(subjectId)}</span>
-                      <select
-                        value={examTypes[key] || "Test 1"}
-                        onChange={(e) =>
-                          setExamTypes((prev) => ({
-                            ...prev,
-                            [key]: e.target.value,
-                          }))
-                        }
-                      >
-                        <option>Test 1</option>
-                        <option>Test 2</option>
-                        <option>Test 3</option>
-                        <option>Midterm</option>
-                        <option>Final Exam</option>
-                      </select>
-                      <input
-                        type="number"
-                        value={inputMarks[key] || ""}
-                        onChange={(e) => setInputMarks((prev) => ({ ...prev, [key]: e.target.value }))}
-                      />
-                      <button onClick={() => saveMarks(student.firebaseId, subjectId)}>Save</button>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+        <div className="form-card">
+          <div className="student-form-bottom">
+            <select
+              value={selectedClass}
+              onChange={(event) => {
+                setSelectedClass(event.target.value);
+                loadStudents(event.target.value);
+                setSelectedStudent("");
+                setStudentData(null);
+              }}
+            >
+              <option value="">Select Class</option>
+              {Classes.map((classItem) => (
+                <option key={classItem.id} value={classItem.id}>
+                  {classItem.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedStudent}
+              onChange={(event) => {
+                setSelectedStudent(event.target.value);
+                selectStudent(event.target.value);
+              }}
+              disabled={!selectedClass}
+            >
+              <option value="">Select Student</option>
+              {students.map((student) => (
+                <option key={student.id} value={student.id}>
+                  {student.name}
+                </option>
+              ))}
+            </select>
+
+            <select value={examType} onChange={(event) => setExamType(event.target.value)} disabled={!selectedStudent}>
+              <option value="">Select Exam</option>
+              <option value="Test 1">Test 1</option>
+              <option value="Test 2">Test 2</option>
+              <option value="Test 3">Test 3</option>
+              <option value="Midterm">Midterm</option>
+              <option value="Final">Final</option>
+            </select>
+
+            <input
+              type="text"
+              value={academicYear}
+              onChange={(event) => setAcademicYear(event.target.value)}
+              placeholder="Academic Year"
+            />
+
+            <textarea
+              placeholder="Remarks"
+              value={remarks}
+              onChange={(event) => setRemarks(event.target.value)}
+            />
           </div>
 
-          <div className="marks-table-panel">
-            <div className="table-card">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Student</th>
-                    <th>Class</th>
-                    <th>Subject</th>
-                    <th>Exam</th>
-                    <th>Marks</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {marks.map((item) => {
-                    const student = students.find((row) => row.firebaseId === item.studentId);
-                    return (
-                      <tr key={item.firebaseId}>
-                        <td>{student?.name || "-"}</td>
-                        <td>{student ? getClassName(student.classId) : "-"}</td>
-                        <td>{getSubjectName(item.subjectId)}</td>
-                        <td>{item.examType}</td>
-                        <td>{item.marks}</td>
+          {loading ? (
+            <div className="panel">Loading student...</div>
+          ) : studentData ? (
+            <>
+              <div className="panel">
+                <strong>Student:</strong> {studentData.name || selectedStudentName}
+              </div>
+
+              <div className="table-card">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>Marks</th>
+                      <th>Maximum Marks</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {subjects.map((subject, index) => (
+                      <tr key={subject.subjectId}>
+                        <td>{getSubjectName(subject.subjectId)}</td>
+                        <td>
+                          <input
+                            type="number"
+                            value={subject.marks}
+                            onChange={(event) => updateMarks(index, "marks", event.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            value={subject.maxMarks}
+                            onChange={(event) => updateMarks(index, "maxMarks", event.target.value)}
+                          />
+                        </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <button onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save"}
+              </button>
+            </>
+          ) : (
+            <div className="panel">Select a student to load subjects</div>
+          )}
         </div>
       </div>
     </div>

@@ -1,121 +1,112 @@
 import { useEffect, useState } from "react";
+
 import Sidebar from "../../components/Sidebar";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase/firebase";
-import { Subjects } from "../../data/data";
 import Navbar from "../../components/Navbar";
+import { getStudentMarks } from "../../api/marksApi";
+import { calculateResult } from "../../utils/resultUtils";
+import getNavbarUser from "../../utils/getNavbarUser";
+import { toast } from "react-toastify";
+import { Subjects } from "../../data/data";
 
 function MyResults() {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [marks, setMarks] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [marks, setMarks] = useState([]);
+  const navbarUser = getNavbarUser();
+  const userId = navbarUser?.id;
 
-    async function getMarks() {
-        const studentId = localStorage.getItem("studentId");
-        const result = await getDocs(collection(db, "marks"));
-        const temp = [];
+  useEffect(() => {
+    async function loadMarks() {
+      if (!userId) {
+        return;
+      }
 
-        result.forEach(doc => {
-                const data =
-                doc.data();
-
-            if (data.studentId === studentId) {
-                temp.push(data);
-            }
-        });
-        setMarks(temp);
+      try {
+        const response = await getStudentMarks(userId);
+        setMarks(response.marks || []);
+      } catch (error) {
+        toast.error("Error loading results: " + error.message);
+      }
     }
 
-    useEffect(() => {
-        getMarks();
-    }, []);
+    loadMarks();
+  }, [userId]);
 
-    function getSubjectName(id) {
-        const subject = Subjects.find(item => item.id === Number(id));
-        return subject?.name;
+  function getSubjectName(id) {
+    return Subjects.find((item) => item.id === Number(id))?.name || "-";
+  }
+
+  const groupedMarks = {};
+
+  marks.forEach((item) => {
+    if (!groupedMarks[item.examType]) {
+      groupedMarks[item.examType] = [];
     }
 
-    function getGrade(percentage) {
-        if (percentage >= 90)
-            return "A+";
-        if (percentage >= 80)
-            return "A";
-        if (percentage >= 70)
-            return "B";
-        if (percentage >= 60)
-            return "C";
-        if (percentage >= 50)
-            return "D";
-        return "F";
-    }
+    groupedMarks[item.examType].push(item);
+  });
 
-    const groupedMarks = {};
+  return (
+    <div className="wrapper">
+      <Sidebar isOpen={sidebarOpen} />
 
-    marks.forEach(item => {
-        if (!groupedMarks[item.subjectId]) {
-            groupedMarks[item.subjectId] = [];
-        }
+      <div className="main">
+        <Navbar title="My Results" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
 
-        groupedMarks[item.subjectId].push(item);
-    });
-
-    return (
-        <div className="wrapper">
-            <Sidebar isOpen={sidebarOpen} />
-            <div className="main">
-                <Navbar title="My Results" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
-
-                <h2>My Results</h2>
-                {Object.keys(groupedMarks).map(
-                        subjectId => {
-                            const subjectMarks = groupedMarks[subjectId];
-                            const weights = {
-                                "Test 1":10,
-                                "Test 2":10,
-                                "Test 3":10,
-                                "Midterm":30,
-                                "Final Exam":40
-                            };
-
-                            let percentage = 0;
-
-                            subjectMarks.forEach(item => {
-                                    percentage +=(Number(item.marks) * weights[item.examType]) / 100;
-                                }
-                            );
-
-                            return (
-                                <div className="result-card" key={subjectId}>
-                                    <h3>{getSubjectName(subjectId)}</h3>
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Exam</th>
-                                                <th>Marks</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {subjectMarks.map((item,index) => (
-                                                        <tr key={index}>
-                                                            <td>{item.examType}</td>
-                                                            <td>{item.marks}</td>
-                                                        </tr>
-                                                    )
-                                                )
-                                            }
-                                        </tbody>
-                                    </table>
-                                    <div className="summary-box">
-                                        <p>Percentage : {" "} {percentage.toFixed(2)}%</p>
-                                        <p>Grade : {" "} {getGrade(percentage)}</p>
-                                    </div>
-                                </div>
-                            );
-                        }
-                    )
-                }
-            </div>
+        <div className="page-header">
+          <div>
+            <h2>My Results</h2>
+            <p>View subject-wise marks and result summary</p>
+          </div>
         </div>
-    );
+
+        {Object.keys(groupedMarks).length === 0 ? (
+          <div className="panel">No results found</div>
+        ) : (
+          Object.keys(groupedMarks).map((examType) => {
+            const examMarks = groupedMarks[examType];
+            const result = calculateResult(
+              examMarks.flatMap((record) => record.subjects || [])
+            );
+
+            return (
+              <div className="result-card" key={examType}>
+                <h3>{examType}</h3>
+
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>Marks</th>
+                      <th>Maximum Marks</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {examMarks.flatMap((record) =>
+                      (record.subjects || []).map((subject) => (
+                        <tr key={`${record.id}-${subject.subjectId}`}>
+                          <td>{getSubjectName(subject.subjectId)}</td>
+                          <td>{subject.marks}</td>
+                          <td>{subject.maxMarks}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+
+                <div className="summary-box">
+                  <p>Total : {result.obtained}/{result.total}</p>
+                  <p>Percentage : {result.percentage}%</p>
+                  <p>Grade : {result.grade}</p>
+                  <p>Status : {result.status}</p>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default MyResults;

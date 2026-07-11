@@ -1,225 +1,278 @@
 import { useEffect, useState } from "react";
-import { addDoc, collection, getDocs } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
+
 import Sidebar from "../../components/Sidebar";
-import { db } from "../../firebase/firebase";
-import { Classes, Subjects } from "../../data/data";
 import Navbar from "../../components/Navbar";
+import { Classes, Subjects } from "../../data/data";
+import { getMyTeacherProfile } from "../../api/teacherApi";
+import { getStudents } from "../../api/studentApi";
+import { saveMarks } from "../../api/marksApi";
+import getNavbarUser from "../../utils/getNavbarUser";
+import { toast } from "react-toastify";
 
 function TeacherMarks() {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [teacher, setTeacher] = useState(null);
-    const [students, setStudents] = useState([]);
-    const [marks, setMarks] = useState([]);
-    const [selectedClass, setSelectedClass] = useState("");
-    const [selectedStudent, setSelectedStudent] = useState("");
-    const [examType, setExamType] = useState("Test 1");
-    const [inputMarks, setInputMarks] = useState({});
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [teacher, setTeacher] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState("");
+  const [studentData, setStudentData] = useState(null);
+  const [examType, setExamType] = useState("Test 1");
+  const [academicYear, setAcademicYear] = useState("2026-27");
+  const [remarks, setRemarks] = useState("");
+  const [subjects, setSubjects] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-    async function loadData() {
-        const teacherId = localStorage.getItem("teacherId");
-        const teacherSnapshot = await getDocs(collection(db,"teachers"));
-        let teacherData = null;
-        teacherSnapshot.forEach((doc) => {
-            if(doc.id === teacherId) {
-                teacherData = {
-                    firebaseId: doc.id,
-                    ...doc.data()
-                };
-            }
-        });
+  const navigate = useNavigate();
+  const navbarUser = getNavbarUser();
+
+  useEffect(() => {
+    async function loadTeacher() {
+      try {
+        const response = await getMyTeacherProfile();
+        const teacherData = response.teacher || null;
+
         setTeacher(teacherData);
 
-        if(teacherData && teacherData.classIds && teacherData.classIds.length > 0) {
-            setSelectedClass(teacherData.classIds[0]);
-        }
-        const studentSnapshot = await getDocs(collection(db,"students"));
-        const studentRows = [];
-        studentSnapshot.forEach((doc) => {
-            studentRows.push({
-                firebaseId: doc.id,
-                ...doc.data()
-            });
+        const classId = teacherData?.assignedClasses?.[0] || "";
+        setSelectedClass(classId ? String(classId) : "");
+      } catch (error) {
+        toast.error("Error loading teacher: " + error.message);
+      }
+    }
+
+    loadTeacher();
+  }, []);
+
+  useEffect(() => {
+    async function loadStudentsForClass() {
+      if (!selectedClass) {
+        setStudents([]);
+        setSelectedStudent("");
+        setStudentData(null);
+        setSubjects([]);
+        return;
+      }
+
+      try {
+        const response = await getStudents({
+          classId: selectedClass,
         });
-        setStudents(studentRows);
 
-        const marksSnapshot = await getDocs(collection(db,"marks"));
-        const marksRows = [];
-        marksSnapshot.forEach((doc) => {
-            marksRows.push({
-                firebaseId: doc.id,
-                ...doc.data()
-            });
-        });
-        setMarks(marksRows);
+        setStudents(response.students || []);
+      } catch (error) {
+        toast.error("Error loading students: " + error.message);
+      }
     }
 
-    useEffect(()=> {
-        loadData();
-    },[]);
+    if (teacher) {
+      loadStudentsForClass();
+    }
+  }, [selectedClass, teacher]);
 
-    useEffect(() => {
-        const filtered = students.filter((student) => Number(student.classId) === Number(selectedClass));
-        if(filtered.length > 0) {
-            setSelectedStudent(filtered[0].firebaseId);
-        }
-        else {
-            setSelectedStudent("");
-        }
-    },[students, selectedClass]);
-
-
-    function getClassName(id) {
-        return (
-            Classes.find((item) => item.id === Number(id))?.name || "-"
-        )
+  useEffect(() => {
+    if (!studentData) {
+      setSubjects([]);
+      return;
     }
 
-    function getSubjectName(id) {
-        return (
-            Subjects.find((item) => item.id === Number(id))?.name || "-"
-        )
+    const classData = Classes.find((item) => item.id === Number(studentData.classId));
+
+    if (!classData) {
+      setSubjects([]);
+      return;
     }
 
-    function isAlreadyAdded(subjectId) {
-        return marks.find((item) => item.studentId === selectedStudent && Number(item.subjectId) === Number(subjectId) && item.examType === examType)
-    }
+    const studentSubjects = [
+      ...classData.compulsorySubjects,
+      ...(Array.isArray(studentData.selectedSubjects) ? studentData.selectedSubjects : []),
+    ];
 
-    const filteredStudents = students.filter(
-        (student) => Number(student.classId) === Number(selectedClass)
-    )
+    const uniqueSubjects = [...new Set(studentSubjects)];
 
-    async function saveMarks(subjectId) {
-        if (!selectedStudent) {
-            return;
-        }
-
-        const alreadyAdded = isAlreadyAdded(subjectId);
-        if (alreadyAdded) {
-            alert("Marks already added for this exam.");
-            return;
-        }
-
-        const key = `${selectedStudent}-${subjectId}`;
-        const enteredMarks = Number(inputMarks[key] || 0);
-        if (enteredMarks < 0 || enteredMarks > 100) {
-            alert("Marks should be between 0 and 100.");
-            return;
-        }
-
-        await addDoc(collection(db, "marks"),{
-                studentId: selectedStudent,
-                subjectId: Number(subjectId),
-                examType,
-                marks: enteredMarks
-            }
-        );
-
-        setInputMarks((prev) => ({...prev,[key]: ""}));
-        loadData();
-    }
-
-    if (!teacher) {
-        return (
-            <div className="wrapper">
-                <Sidebar isOpen={sidebarOpen} />
-                <div className="main">
-                    <Navbar title="Teacher Marks" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
-                    <h2>Loading Details</h2>
-                </div>
-            </div>
-        );
-    }
-
-    const teacherSubjects = teacher.subjectIds || [];
-    return (
-        <div className="wrapper">
-            <Sidebar isOpen={sidebarOpen} />
-            <div className="main">
-                <Navbar title="Teacher Marks" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
-                <div className="page-header">
-                    <div>
-                        <h2>Teacher Marks</h2>
-                        <p>Add marks for your assigned classes and subjects</p>
-                    </div>
-                </div>
-
-                <div className="panel">
-                    <div
-                        style={{
-                            display: "flex",
-                            gap: "20px",
-                            marginBottom: "20px",
-                            flexWrap: "wrap"
-                        }}
-                    >
-                        <div>
-                            <label>Class</label>
-                            <br />
-                            <select value={selectedClass} onChange={(e) => setSelectedClass(Number(e.target.value))}>
-                            {(teacher.classIds || []).map((classId) => (
-                                            <option key={classId} value={classId}>{getClassName(classId)}</option>
-                                        )
-                                    )
-                                }
-                            </select>
-                        </div>
-                        <div>
-                            <label>Student</label>
-                            <br />
-                            <select value={selectedStudent} onChange={(e) => setSelectedStudent(e.target.value)}>
-                                {filteredStudents.map((student) => (
-                                            <option key={student.firebaseId} value={student.firebaseId}>{student.name}</option>
-                                        )
-                                    )
-                                }
-                            </select>
-                        </div>
-                        <div>
-                            <label>Exam</label>
-                            <br />
-                            <select value={examType} onChange={(e) => setExamType(e.target.value)}>
-                                <option>Test 1</option>
-                                <option>Test 2</option>
-                                <option>Test 3</option>
-                                <option>Midterm</option>
-                                <option>Final Exam</option>
-                            </select>
-                        </div>
-                    </div>
-                    {teacherSubjects.map(
-                            (subjectId) => {
-                                const key = `${selectedStudent}-${subjectId}`;
-                                const alreadyAdded = isAlreadyAdded(subjectId);
-                                return (
-                                    <div key={subjectId} className="subject-row">
-                                        <div style={{ width: "220px" }}>
-                                            <strong>{getSubjectName(subjectId)}</strong>
-                                        </div>
-                                        {alreadyAdded ? (
-                                                <span className="status-pill present">Marks Added</span>
-                                            ) : (
-                                                <>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="100"
-                                                        placeholder="Enter Marks"
-                                                        value={inputMarks[key] || ""}
-                                                        onChange={(e) => setInputMarks((prev) => ({...prev,[key]: e.target.value}))}
-                                                    />
-                                                    <button onClick={() => saveMarks(subjectId)}>Save</button>
-                                                </>
-                                            )
-                                        }
-                                    </div>
-                                );
-                            }
-                        )
-                    }
-                </div>
-            </div>
-        </div>
+    setSubjects(
+      uniqueSubjects.map((id) => ({
+        subjectId: id,
+        marks: "",
+        maxMarks: 100,
+      }))
     );
+  }, [studentData]);
+
+  async function selectStudent(id) {
+    const student = students.find((item) => item.id === id);
+    setSelectedStudent(id);
+    setStudentData(student || null);
+  }
+
+  function updateMarks(index, field, value) {
+    setSubjects((previous) => {
+      const updated = [...previous];
+
+      updated[index] = {
+        ...updated[index],
+        [field]: Number(value),
+      };
+
+      return updated;
+    });
+  }
+
+  function getClassName(id) {
+    return Classes.find((item) => item.id === Number(id))?.name || "-";
+  }
+
+  function getSubjectName(id) {
+    return Subjects.find((item) => item.id === Number(id))?.name || "-";
+  }
+
+  async function handleSave() {
+    if (!selectedStudent || !examType || !academicYear) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      await saveMarks({
+        studentId: selectedStudent,
+        examType,
+        academicYear,
+        subjects,
+        remarks,
+      });
+
+      toast.success("Marks saved successfully.");
+      navigate("/teacher/marks");
+    } catch (error) {
+      toast.error("Error saving marks: " + error.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!teacher) {
+    return (
+      <div className="wrapper">
+        <Sidebar isOpen={sidebarOpen} />
+
+        <div className="main">
+          <Navbar title="Teacher Marks" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+          <div className="panel">Loading Details...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="wrapper">
+      <Sidebar isOpen={sidebarOpen} />
+
+      <div className="main">
+        <Navbar title="Teacher Marks" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+
+        <div className="page-header">
+          <div>
+            <h2>Teacher Marks</h2>
+            <p>Add marks for your assigned classes and subjects</p>
+          </div>
+        </div>
+
+        <div className="form-card">
+          <div className="student-form-bottom">
+            <select value={selectedClass} onChange={(event) => setSelectedClass(event.target.value)}>
+              <option value="">Select Class</option>
+              {(teacher.assignedClasses || []).map((classId) => (
+                <option key={classId} value={classId}>
+                  {getClassName(classId)}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedStudent}
+              onChange={(event) => selectStudent(event.target.value)}
+              disabled={!selectedClass}
+            >
+              <option value="">Select Student</option>
+              {students.map((student) => (
+                <option key={student.id} value={student.id}>
+                  {student.name}
+                </option>
+              ))}
+            </select>
+
+            <select value={examType} onChange={(event) => setExamType(event.target.value)}>
+              <option value="Test 1">Test 1</option>
+              <option value="Test 2">Test 2</option>
+              <option value="Test 3">Test 3</option>
+              <option value="Midterm">Midterm</option>
+              <option value="Final">Final</option>
+            </select>
+
+            <input
+              type="text"
+              value={academicYear}
+              onChange={(event) => setAcademicYear(event.target.value)}
+              placeholder="Academic Year"
+            />
+
+            <textarea
+              placeholder="Remarks"
+              value={remarks}
+              onChange={(event) => setRemarks(event.target.value)}
+            />
+          </div>
+
+          {loading ? (
+            <div className="panel">Loading student...</div>
+          ) : studentData ? (
+            <div className="table-card">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Subject</th>
+                    <th>Marks</th>
+                    <th>Maximum Marks</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {subjects.map((subject, index) => (
+                    <tr key={subject.subjectId}>
+                      <td>{getSubjectName(subject.subjectId)}</td>
+                      <td>
+                        <input
+                          type="number"
+                          value={subject.marks}
+                          onChange={(event) => updateMarks(index, "marks", event.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          value={subject.maxMarks}
+                          onChange={(event) => updateMarks(index, "maxMarks", event.target.value)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="panel">Select a student to load subjects</div>
+          )}
+
+          <button onClick={handleSave} disabled={saving || !selectedStudent}>
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default TeacherMarks;
