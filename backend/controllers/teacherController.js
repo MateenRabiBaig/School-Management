@@ -1,5 +1,5 @@
 const Teacher = require("../models/Teacher");
-const generateTeacherId = require("../utils/generateTeacherId");
+const generateTeacherId = require("../utils/generateEntityId");
 const validateTeacherAssignments = require("../utils/validateTeacherAssignments");
 
 const getTeachers = async (req, res, next) => {

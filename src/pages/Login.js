@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, getDocs } from "firebase/firestore";
 import { toast } from "react-toastify";
-import { db } from "../firebase/firebase"
 import { loginUser } from "../api/authApi"
 import { saveAuth } from "../utils/authStorage"
 
@@ -29,60 +27,49 @@ function Login() {
         }
     }
 
-    async function handleTeacherLogin() {
-        const snapshot = await getDocs(collection(db,"teachers"))
-        let teacher = null
-        snapshot.forEach((docItem) => {
-            const data = docItem.data()
-            const teacherIdentifier = data.teacherId || data.name
-
-            if(teacherIdentifier === userId && data.password === password) {
-                teacher = { firebaseId: docItem.id, ...data }
-            }
-        })
-
-        if(!teacher) {
-            throw new Error("Invalid teacher credentials")
-        }
-        localStorage.setItem("role","teacher")
-        localStorage.setItem("user",JSON.stringify({
-            id: teacher.firebaseId,
-            name: teacher.name,
-            role: "teacher",
-            teacherId: teacher.teacherId || teacher.firebaseId,
-            photo: teacher.photo || "",
-        }))
-        localStorage.setItem("teacherId",teacher.firebaseId)
-        toast.success(`Welcome back, ${teacher.name}`)
-        navigate("/teacher")
-    }
-
     async function handleLogin() {
         if(!role) {
-            toast.error("Please enter User ID and password")
+            toast.error("Please select a role")
             return
         }
 
+        if (!userId || !password) {
+            toast.error("Please enter User ID and password");
+            return;
+        }
+
         try {
-            setLoading(true)
-            if(role === "teacher") {
-                await handleTeacherLogin()
+            setLoading(true);
+            
+            const response = await loginUser({ userId, password, role });
+            saveAuth(response.token, response.user);
+            toast.success(`Welcome back, ${response.user.name}!`);
+            
+            if (response.user.role === "admin") {
+                navigate("/admin");
+                return;
             }
-            else {
-                await handleApiLogin()
+            
+            if (response.user.role === "student") {
+                navigate("/student");
+                return;
+            }
+
+            if (response.user.role === "teacher") {
+                navigate("/teacher");
             }
         }
-        catch(error) {
-            toast.error(error.message)
+        catch (error) {
+            toast.error(error.message);
         }
         finally {
-            setLoading(false)
+            setLoading(false);
         }
     }
 
     function handleKeyDown(event) {
-        if(event.key === "Enter") {
-            handleLogin()
+        if (event.key === "Enter") {
+            handleLogin();
         }
     }
 
