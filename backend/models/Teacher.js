@@ -1,100 +1,117 @@
-const mongoose = require("mongoose")
-const bcrypt = require("bcryptjs")
-
-const teacherAssignmentSchema = new mongoose.Schema(
-    {
-        classId: {
-            type: Number,
-            required: true
-        },
-        subjectIds: {
-            type: [Number],
-            default: [],
-        }
-    },
-    {
-        _id: false
-    }
-)
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const teacherSchema = new mongoose.Schema(
-    {
-        teacherId: {
-            type: String,
-            required: true,
-            unique: true,
-            trim: true,
-            uppercase: true,
-        },
-        name: {
-            type: String,
-            required: true,
-            trim: true
-        },
-        password: {
-            type: String,
-            required: true,
-            minlength: 6,
-            select: false
-        },
-        email: {
-            type: String,
-            trim: true,
-            lowercase: true
-        },
-        mobile: {
-            type: String,
-            trim: true
-        },
-        gender: {
-            type: String,
-            enum: ["Male", "Female", "Other"]
-        },
-        assignments: {
-            type: [teacherAssignmentSchema],
-            default: []
-        },
-        photo: {
-            url: {
-                type: String,
-                default: ""
-            },
-            publicId: {
-                type: String,
-                default: ""
-            }
-        },
-        active: {
-            type: Boolean,
-            default: true
-        },
-        joiningDate: {
-            type: Date
-        },
-        role: {
-            type: String,
-            enum: ["teacher"],
-            default: "teacher",
-            immutable: true
-        }
+  {
+    teacherId: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      uppercase: true,
     },
-    {
-        timestamps: true
-    }
-)
+
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    password: {
+      type: String,
+      required: true,
+      minlength: 6,
+      select: false,
+    },
+
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+      default: null,
+    },
+
+    dob: {
+      type: Date,
+      default: null,
+    },
+
+    mobile: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: "",
+    },
+
+    address: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    joiningDate: {
+      type: Date,
+      default: null,
+    },
+
+    assignedClasses: {
+      type: [Number],
+      default: [],
+    },
+
+    assignedSubjects: {
+      type: [Number],
+      default: [],
+    },
+
+    active: {
+      type: Boolean,
+      default: true,
+    },
+
+    photo: {
+      url: {
+        type: String,
+        default: "",
+      },
+
+      publicId: {
+        type: String,
+        default: "",
+      },
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
 teacherSchema.pre("save", async function () {
-    if(!this.isModified("password")) {
-        return;
-    }
-    const salt = await bcrypt.genSalt(10)
-    this.password = await bcrypt.hash(this.password,salt)   
-})
+  if (!this.isModified("password")) {
+    return;
+  }
+
+  this.password = await bcrypt.hash(this.password, 12);
+});
 
 teacherSchema.methods.comparePassword = async function (enteredPassword) {
-    return bcrypt.compare(enteredPassword,this.password)
-}
+    return bcrypt.compare(enteredPassword,this.password);
+  };
 
-const Teacher = mongoose.model("Teacher",teacherSchema)
+teacherSchema.set("toJSON", {
+  transform: function (doc, ret) {
+    ret.id = ret._id;
 
-module.exports = Teacher
+    delete ret._id;
+    delete ret.__v;
+    delete ret.password;
+    return ret;
+  },
+});
+
+module.exports = mongoose.model("Teacher",teacherSchema);

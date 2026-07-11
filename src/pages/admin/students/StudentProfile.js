@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { UserRound } from "lucide-react";
-import Sidebar from "../../components/Sidebar";
-import Navbar from "../../components/Navbar";
-import { Classes, Subjects } from "../../data/data";
-import { getMyStudentProfile } from "../../api/studentApi";
-import getNavbarUser from "../../utils/getNavbarUser";
+import Sidebar from "../../../components/Sidebar"
+import Navbar from "../../../components/Navbar";
+import { Classes, Subjects } from "../../../data/data";
+import { getMyStudentProfile } from "../../../api/studentApi";
+import getNavbarUser from "../../../utils/getNavbarUser";
 import { toast } from "react-toastify";
 
 function formatDate(dateValue) {

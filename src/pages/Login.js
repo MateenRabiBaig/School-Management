@@ -49,7 +49,7 @@ function Login() {
             id: teacher.firebaseId,
             name: teacher.name,
             role: "teacher",
-            teacherId: teacherId || teacher.firebaseId,
+            teacherId: teacher.teacherId || teacher.firebaseId,
             photo: teacher.photo || "",
         }))
         localStorage.setItem("teacherId",teacher.firebaseId)

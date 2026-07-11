@@ -3,6 +3,7 @@ const cors = require("cors");
 const healthRoutes = require("./routes/healthRoutes")
 const authRoutes = require("./routes/authRoutes")
 const studentRoutes = require("./routes/studentRoutes")
+const teacherRoutes = require("./routes/teacherRoutes")
 const { notFound, errorHandler } = require("./middleware/errorMiddleware")
 
 const app = express()
@@ -17,6 +18,7 @@ app.get("/",(req,res) => {
 app.use("/api/health", healthRoutes)
 app.use("/api/auth", authRoutes)
 app.use("/api/students", studentRoutes)
+app.use("/api/teachers", teacherRoutes)
 app.use(notFound)
 app.use(errorHandler)
 
