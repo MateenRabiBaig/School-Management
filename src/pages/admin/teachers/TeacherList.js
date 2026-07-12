@@ -19,27 +19,23 @@ function TeacherList() {
   const navigate = useNavigate();
   const navbarUser = getNavbarUser();
 
-  // async function loadTeachers() {
-  //   try {
-  //     setLoading(true)
+  async function loadTeachers() {
+    try {
+      setLoading(true);
+      const response = await getTeachers();
+      setTeachers(response.teachers || []);
+    }
+    catch (error) {
+      toast.error("Error loading teachers: " + error.message);
+    }
+    finally {
+      setLoading(false);
+    }
+  }
 
-  //     const response = await getTeachers();
-  //     setTeachers(response.teachers || [])
-  //     const rows = [];
-  //     snapshot.forEach((item) => rows.push({ firebaseId: item.id, ...item.data() }));
-  //     setTeachers(rows);
-  //   }
-  //   catch (error) {
-  //     toast.error("Error loading teachers: " + error.message);
-  //   }
-  //   finally {
-  //     setLoading(false)
-  //   }
-  // }
-
-  // useEffect(() => {
-  //   loadTeachers();
-  // }, []);
+  useEffect(() => {
+    loadTeachers();
+  }, []);
 
   function getClassName(classIds) {
     return (classIds || []).map((classId) => Classes.find((item) => item.id === Number(classId))?.name || "-").join(", ");
@@ -64,7 +60,7 @@ function TeacherList() {
   const filteredTeacher = teachers.filter((teacher) => {
     const normalizedQuery = searchQuery.toLowerCase().trim()
     const matchSearch = searchBy === "id" ? String(teacher.teacherId || "").toLowerCase().includes(normalizedQuery) : String(teacher.name || "").toLowerCase().includes(normalizedQuery)
-    const matchClass = selectedClass === "" || (teacher.assignedClass || []).map(Number).includes((Number(selectedClass)))
+    const matchClass = selectedClass === "" || (teacher.assignedClasses || []).map(Number).includes((Number(selectedClass)))
     const matchSubject = selectedSubject === "" || (teacher.assignedSubjects || []).map(Number).includes(Number(selectedSubject))
     const matchStatus = statusFilter === "" || String(teacher.active) === statusFilter
 
@@ -160,8 +156,8 @@ function TeacherList() {
                         <td>{teacher.teacherId || "-"}</td>
                         <td>{teacher.name || "-"}</td>
                         <td>{teacher.mobile || "-"}</td>
-                        <td>{(teacher.assignedClasses || []).map(getClassName).join(", ") || "-"}</td>
-                        <td>{(teacher.assignedSubjects || []).map(getSubjectName).join(", ") || "-"}</td>
+                        <td>{getClassName(teacher.assignedClasses) || "-"}</td>
+                        <td>{getSubjectName(teacher.assignedSubjects) || "-"}</td>
                         <td>{teacher.active === false ? "No" : "Yes"}</td>
                         <td>
                           <button onClick={() => navigate(`/admin/teachers/${teacher.id}`)}>View</button>

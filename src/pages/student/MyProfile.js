@@ -1,31 +1,55 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
 import { UserRound } from "lucide-react";
 import Sidebar from "../../components/Sidebar";
-import { db } from "../../firebase/firebase";
 import Navbar from "../../components/Navbar";
+import { getMyStudentProfile } from "../../api/studentApi";
+import getNavbarUser from "../../utils/getNavbarUser";
+import { toast } from "react-toastify";
+
+function formatDate(dateValue) {
+  if (!dateValue) {
+    return "-";
+  }
+
+  return String(dateValue).slice(0, 10);
+}
 
 function MyProfile() {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [student, setStudent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navbarUser = getNavbarUser();
 
   useEffect(() => {
     async function loadProfile() {
-      const studentId = localStorage.getItem("studentId");
-      if (!studentId) return;
-      const snapshot = await getDoc(doc(db, "students", studentId));
-      if (snapshot.exists()) {
-        setStudent({ firebaseId: snapshot.id, ...snapshot.data() });
+      try {
+        setLoading(true);
+
+        const response = await getMyStudentProfile();
+        setStudent(response.student);
+
+      }
+      catch (error) {
+        toast.error("Error loading profile: " + error.message);
+      }
+      finally {
+        setLoading(false);
       }
     }
     loadProfile();
   }, []);
 
+  const photoUrl = student?.photo?.url || "";
+
   return (
     <div className="wrapper">
-            <Sidebar isOpen={sidebarOpen} />
-            <div className="main">
-                <Navbar title="My Profile" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+      <Sidebar isOpen={sidebarOpen} />
+      <div className="main">
+        <Navbar
+          title="My Profile"
+          user={navbarUser}
+          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+        />
 
         <div className="page-header">
           <div>
@@ -34,27 +58,69 @@ function MyProfile() {
           </div>
         </div>
 
-        {!student ? (
-          <div className="panel">Loading profile</div>
+        {loading ? (
+          <div className="panel">
+            Loading profile...
+          </div>
+        ) : !student ? (
+          <div className="panel">
+            Profile not found
+          </div>
         ) : (
           <div className="profile-card">
-            {student.photo ? (
-              <img className="profile-photo" src={student.photo} alt={student.name} />
+            {photoUrl ? (
+              <img
+                className="profile-photo"
+                src={photoUrl}
+                alt={student.name}
+              />
             ) : (
               <div className="profile-photo placeholder-photo">
                 <UserRound size={38} />
               </div>
             )}
+
             <div className="profile-details">
-              <div><strong>Name:</strong> {student.name || "-"}</div>
-              <div><strong>Gender:</strong> {student.gender || "-"}</div>
-              <div><strong>DOB:</strong> {student.dob || "-"}</div>
-              <div><strong>Mobile:</strong> {student.mobile || "-"}</div>
-              <div><strong>Parent Name:</strong> {student.parentName || "-"}</div>
-              <div><strong>Parent Contact:</strong> {student.parentContact || "-"}</div>
-              <div><strong>Admission Date:</strong> {student.admissionDate || "-"}</div>
-              <div><strong>Address:</strong> {student.address || "-"}</div>
-              <div><strong>Active:</strong> {student.active === false ? "No" : "Yes"}</div>
+              <div>
+                <strong>Student ID:</strong> {student.studentId || "-"}
+              </div>
+
+              <div>
+                <strong>Name:</strong> {student.name || "-"}
+              </div>
+
+              <div>
+                <strong>Gender:</strong> {student.gender || "-"}
+              </div>
+
+              <div>
+                <strong>DOB:</strong> {formatDate(student.dob)}
+              </div>
+
+              <div>
+                <strong>Mobile:</strong> {student.mobile || "-"}
+              </div>
+
+              <div>
+                <strong>Parent Name:</strong> {student.parentName || "-"}
+              </div>
+
+              <div>
+                <strong>Parent Contact:</strong> {student.parentContact || "-"}
+              </div>
+
+              <div>
+                <strong>Admission Date:</strong> {formatDate(student.admissionDate)}
+              </div>
+
+              <div>
+                <strong>Address:</strong> {student.address || "-"}
+              </div>
+
+              <div>
+                <strong>Active:</strong> {student.active === false ? "No" : "Yes"}
+              </div>
+
             </div>
           </div>
         )}
@@ -63,4 +129,4 @@ function MyProfile() {
   );
 }
 
-export default MyProfile;
+export default MyProfile

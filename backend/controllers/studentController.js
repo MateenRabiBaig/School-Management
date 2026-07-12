@@ -67,7 +67,8 @@ const createStudent = async(req,res,next) => {
             parentContact,
             address,
             admissionDate: admissionDate || undefined,
-            active: typeof active === "boolean" ? active : true
+            active: typeof active === "boolean" ? active : true,
+            photo: req.body.photo || { url: "", publicId: ""}
         });
         res.status(201).json({ success: true, message: "Student created successfully", student: formatStudentResponse(student)});
     }

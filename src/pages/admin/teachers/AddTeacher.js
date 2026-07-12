@@ -20,13 +20,13 @@ const initialForm = {
   assignedClasses: [],
   assignedSubjects: [],
   active: true,
+  photo: { url: "", publicId: "" }
 };
 
 function AddTeacher() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [form, setForm] = useState(initialForm);
   const [saving, setSaving] = useState(false);
-  const [photo, setPhoto] = useState({ url: "", publicId: "" })
   const navigate = useNavigate();
   const navbarUser = getNavbarUser();
 
@@ -112,7 +112,7 @@ function AddTeacher() {
         <div className="form-card">
           <div className="student-form-top">
             <div className="student-top-fields">
-              <ImageUpload value={photo} onChange={setPhoto} label="Teacher Photo" />
+              <ImageUpload value={form.photo} onChange={(value) => updateField("photo", value)} label="Teacher Photo" />
               <input placeholder="Name" value={form.name} onChange={(event) => updateField("name", event.target.value)} />
               <input type="password" placeholder="Password" value={form.password} onChange={(event) => updateField("password", event.target.value)} />
             </div>

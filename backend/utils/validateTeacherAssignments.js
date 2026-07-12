@@ -1,5 +1,7 @@
-const CLASS_IDS = [10, 11, 12];
-const SUBJECT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+const { Classes, Subjects } = require("../config/academicData");
+
+const CLASS_IDS = Classes.map((classItem) => classItem.id);
+const SUBJECT_IDS = Subjects.map((subject) => subject.id);
 
 const validateTeacherAssignments = ({ assignedClasses, assignedSubjects }) => {
   if (!Array.isArray(assignedClasses)) {

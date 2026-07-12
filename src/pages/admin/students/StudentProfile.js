@@ -3,9 +3,10 @@ import { UserRound } from "lucide-react";
 import Sidebar from "../../../components/Sidebar"
 import Navbar from "../../../components/Navbar";
 import { Classes, Subjects } from "../../../data/data";
-import { getMyStudentProfile } from "../../../api/studentApi";
+import { getStudentById } from "../../../api/studentApi";
 import getNavbarUser from "../../../utils/getNavbarUser";
 import { toast } from "react-toastify";
+import { useParams } from "react-router-dom";
 
 function formatDate(dateValue) {
   if (!dateValue) {
@@ -19,12 +20,18 @@ function MyProfile() {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const navbarUser = getNavbarUser();
+  const { id } = useParams();
 
   useEffect(() => {
     async function loadProfile() {
       try {
         setLoading(true);
-        const response = await getMyStudentProfile();
+        
+        if (!id) {
+          return;
+        }
+        
+        const response = await getStudentById(id);
         setStudent(response.student);
       }
       catch (error) {
@@ -34,8 +41,8 @@ function MyProfile() {
         setLoading(false);
       }
     }
-    loadProfile();
-  }, []);
+  loadProfile();
+  }, [id]);
 
   function getClassName(classId) {
     return Classes.find((classItem) => classItem.id === Number(classId))?.name || "-";

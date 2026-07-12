@@ -1,5 +1,5 @@
 const Teacher = require("../models/Teacher");
-const generateTeacherId = require("../utils/generateEntityId");
+const generateEntityId = require("../utils/generateEntityId");
 const validateTeacherAssignments = require("../utils/validateTeacherAssignments");
 
 const getTeachers = async (req, res, next) => {
@@ -119,6 +119,7 @@ const createTeacher = async (req, res, next) => {
       assignedClasses: assignmentValidation.assignedClasses,
       assignedSubjects: assignmentValidation.assignedSubjects,
       active: Boolean(active),
+      photo: req.body.photo || { url: "", publicId: "" }
     });
 
     res.status(201).json({ message: "Teacher created successfully", teacher });
