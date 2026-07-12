@@ -6,6 +6,7 @@ import { Classes, Subjects } from "../../../data/data";
 import { createStudent } from "../../../api/studentApi";
 import getNavbarUser from "../../../utils/getNavbarUser";
 import { toast } from "react-toastify";
+import ImageUpload from "../../../components/ImageUpload";
 
 const initialForm = {
   name: "",
@@ -26,6 +27,7 @@ function AddStudent() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [form, setForm] = useState(initialForm);
   const [saving, setSaving] = useState(false);
+  const [photo, setPhoto] = useState({ url: "", publicId: "" })
   const navigate = useNavigate();
   const navbarUser = getNavbarUser();
   const selectedClass = useMemo(() => Classes.find((item) => item.id === Number(form.classId)), [form.classId]);
@@ -79,6 +81,7 @@ function AddStudent() {
         ...form,
         classId: Number(form.classId),
         selectedSubjects: form.selectedSubjects.map(Number),
+        photo
       });
 
       toast.success("Student added successfully!");
@@ -109,6 +112,7 @@ function AddStudent() {
         <div className="form-card">
           <div className="student-form-top">
             <div className="student-top-fields">
+              <ImageUpload value={photo} onChange={setPhoto} label="Student Photo" />
               <input placeholder="Name" value={form.name} onChange={(event) => updateField("name", event.target.value)} />
               <input type="password" placeholder="Password" value={form.password} onChange={(event) => updateField("password", event.target.value)} />
             </div>

@@ -8,6 +8,7 @@ import ReportCardPDF from "../../../components/reportCard/ReportCardPDF";
 import getNavbarUser from "../../../utils/getNavbarUser";
 import { toast } from "react-toastify";
 
+function AdminReportCard() {
 const navbarUser = getNavbarUser();
 const navigate = useNavigate();
 const { id } = useParams();
@@ -38,7 +39,7 @@ async function loadReport() {
     }
 }
 
-function AdminReportCard() {
+// function AdminReportCard() {
     if (loading) {
         return (
             <div className="wrapper">
@@ -213,6 +214,7 @@ function AdminReportCard() {
             </div>
         </div>
     );
+// }
 }
 
 export default AdminReportCard

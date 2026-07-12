@@ -45,7 +45,7 @@ const login = async (req, res, next) => {
       throw new Error("Your account is inactive");
     }
 
-    const token = generateToken({ id: user._id, role });
+    const token = generateToken(user._id, role);
 
     const responseUser = { id: user._id, name: user.name, role, active: user.active };
 

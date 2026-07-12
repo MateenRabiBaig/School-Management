@@ -8,14 +8,14 @@ const getSubjectById = (subjectId) => {
     return Subjects.find((subject) => subject.id === Number(subjectId))
 }
 
-const validateStudentAcademicData = (classId,selectedStudents = []) => {
+const validateStudentAcademicData = (classId,selectedSubjects = []) => {
     const classItem = getClassById(classId)
     
     if(!classItem) {
         return { valid: false, message: "Invalid class selected" }
     }
 
-    if(!Array.isArray(selectedStudents)) {
+    if(!Array.isArray(selectedSubjects)) {
         return { valid: false, message: "Selected subjects must be an array" }
     }
 
@@ -40,7 +40,7 @@ const validateStudentAcademicData = (classId,selectedStudents = []) => {
         return { valid: false, message: "Selected subject is not available for this class" }
     }
 
-    for(const group of optionalGroups) {
+    for(const group of optionalSubjects) {
         const selectedFromGroup = uniqueSubjects.filter((subjectId) => group.subjects.includes(subjectId))
         
         if(selectedFromGroup.length!==1) {

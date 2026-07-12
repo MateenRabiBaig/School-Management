@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Eye, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
 import Sidebar from "../../../components/Sidebar";
 import Navbar from "../../../components/Navbar";
 import { getResults } from "../../../api/resultApi";
@@ -9,6 +8,7 @@ import { getAcademicYears } from "../../../api/academicYearApi";
 import { Classes } from "../../../data/data";
 import getNavbarUser from "../../../utils/getNavbarUser";
 import { toast } from "react-toastify";
+import { prepareReportCard } from "../../../utils/reportCardUtils";
 
 function AdminResults() {
   const navigate = useNavigate();

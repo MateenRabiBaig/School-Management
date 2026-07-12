@@ -32,7 +32,7 @@ const formatStudentResponse = (student) => {
 
 const createStudent = async(req,res,next) => {
     try {
-        const { name, password, classId, selectedSubjects, gender, dob, mobile, parentName, parentContact, address, admissionDate, active } = req.body
+        const { studentId, name, password, classId, selectedSubjects, gender, dob, mobile, parentName, parentContact, address, admissionDate, active } = req.body
 
         if(!name || !password || !classId) {
             res.status(400)
@@ -51,8 +51,25 @@ const createStudent = async(req,res,next) => {
             throw new Error(academicValidation.message)
         }
 
-        const student = await Student.create({studentId,name,password,classId: Number(classId),selectedSubjects: academicValidation.selectedSubjects,gender,dob: dob || undefined,mobile,parentName,parentContact,address,admissionDate: admissionDate || undefined,active: typeof active === "boolean" ? active : true})
-        res.status(201).json({ success: true, message: "Student created successfully, student: formatStudentResponse(student)" })
+        // const student = await Student.create({studentId,name,password,classId: Number(classId),selectedSubjects: academicValidation.selectedSubjects,gender,dob: dob || undefined,mobile,parentName,parentContact,address,admissionDate: admissionDate || undefined,active: typeof active === "boolean" ? active : true})
+        const generatedStudentId = await generateEntityId("student", "STU");
+
+        const student = await Student.create({
+            studentId: generatedStudentId,
+            name,
+            password,
+            classId: Number(classId),
+            selectedSubjects: academicValidation.selectedSubjects,
+            gender,
+            dob: dob || undefined,
+            mobile,
+            parentName,
+            parentContact,
+            address,
+            admissionDate: admissionDate || undefined,
+            active: typeof active === "boolean" ? active : true
+        });
+        res.status(201).json({ success: true, message: "Student created successfully", student: formatStudentResponse(student)});
     }
     catch(error) {
         next(error)

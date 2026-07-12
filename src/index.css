@@ -938,3 +938,36 @@ tr:nth-child(even) {
 .Toastify__toast-icon {
     margin-right: 12px;
 }
+
+.image-upload {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.image-upload-box {
+  width:160px;
+  height:160px;
+  border:2px dashed #d1d5db;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  overflow:hidden;
+  background:#fafafa;
+}
+
+.image-preview {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.image-placeholder {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  color:#888;
+}

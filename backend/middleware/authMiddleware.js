@@ -17,19 +17,42 @@ const protect = async(req,res,next) => {
             throw new Error("Authentication required")
         }
 
-        const decoded = jwt.verify(token,process.env.JWT_SECRET)
+        // const decoded = jwt.verify(token,process.env.JWT_SECRET)
+        // console.log(decoded)
 
-        let user;
+        // let user;
 
-        if(decoded.role === "admin") {
-            user = await Admin.findById(decoded.id)
-        }
-        else if(decoded.role === "teacher") {
-            user = await Teacher.findById(decoded.id)
-        }
-        else if(decoded.role === "student") {
-            user = await Student.findById(decoded.id)
-        }
+        // if(decoded.role === "admin") {
+        //     user = await Admin.findById(decoded.id)
+        // }
+        // else if(decoded.role === "teacher") {
+        //     user = await Teacher.findById(decoded.id)
+        // }
+        // else if(decoded.role === "student") {
+        //     user = await Student.findById(decoded.id)
+        // }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+console.log("Decoded:", decoded);
+
+let user;
+
+if (decoded.role === "admin") {
+    console.log("Looking for Admin:", decoded.id);
+    user = await Admin.findById(decoded.id);
+}
+
+else if (decoded.role === "teacher") {
+    console.log("Looking for Teacher:", decoded.id);
+    user = await Teacher.findById(decoded.id);
+}
+
+else if (decoded.role === "student") {
+    console.log("Looking for Student:", decoded.id);
+    user = await Student.findById(decoded.id);
+}
+
+console.log("Found user:", user);
 
         if(!user) {
             res.status(401)
@@ -45,7 +68,7 @@ const protect = async(req,res,next) => {
         next()
     }
     catch(error) {
-        if(error.name === "JsonWebTokenError" || errorName === "TokenExpiredError") {
+        if(error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
             res.status(401)
             return next(new Error(error.name === "TokenExpiredError" ? "Token Expired" : "Invalid Token" ))
         }

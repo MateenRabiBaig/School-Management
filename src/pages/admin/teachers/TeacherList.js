@@ -19,33 +19,33 @@ function TeacherList() {
   const navigate = useNavigate();
   const navbarUser = getNavbarUser();
 
-  async function loadTeachers() {
-    try {
-      setLoading(true)
+  // async function loadTeachers() {
+  //   try {
+  //     setLoading(true)
 
-      const response = await getTeachers();
-      setTeachers(response.teachers || [])
-      const rows = [];
-      snapshot.forEach((item) => rows.push({ firebaseId: item.id, ...item.data() }));
-      setTeachers(rows);
-    }
-    catch (error) {
-      toast.error("Error loading teachers: " + error.message);
-    }
-    finally {
-      setLoading(false)
-    }
-  }
+  //     const response = await getTeachers();
+  //     setTeachers(response.teachers || [])
+  //     const rows = [];
+  //     snapshot.forEach((item) => rows.push({ firebaseId: item.id, ...item.data() }));
+  //     setTeachers(rows);
+  //   }
+  //   catch (error) {
+  //     toast.error("Error loading teachers: " + error.message);
+  //   }
+  //   finally {
+  //     setLoading(false)
+  //   }
+  // }
 
-  useEffect(() => {
-    loadTeachers();
-  }, []);
+  // useEffect(() => {
+  //   loadTeachers();
+  // }, []);
 
-  function getClassNames(classIds) {
+  function getClassName(classIds) {
     return (classIds || []).map((classId) => Classes.find((item) => item.id === Number(classId))?.name || "-").join(", ");
   }
 
-  function getSubjectNames(subjectIds) {
+  function getSubjectName(subjectIds) {
     return (subjectIds || []).map((subjectId) => Subjects.find((item) => item.id === Number(subjectId))?.name || "-").join(", ");
   }
 
@@ -149,12 +149,12 @@ function TeacherList() {
               </thead>
 
               <tbody>
-                {filteredTeachers.length === 0 ? (
+                {filteredTeacher.length === 0 ? (
                   <tr>
                     <td colSpan="7">No teachers found</td>
                   </tr>
                 ) : (
-                  filteredTeachers.map(
+                  filteredTeacher.map(
                     (teacher) => (
                       <tr key={teacher.id}>
                         <td>{teacher.teacherId || "-"}</td>
