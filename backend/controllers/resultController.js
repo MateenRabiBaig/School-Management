@@ -1,6 +1,7 @@
 const Marks = require("../models/Marks");
 const Student = require("../models/Student");
 const Teacher = require("../models/Teacher");
+const Attendance = require("../models/Attendance");
 const calculateResult = require("../utils/calculateResults");
 
 const getStudentResults = async (req, res, next) => {
@@ -23,6 +24,13 @@ const getStudentResults = async (req, res, next) => {
       createdAt: -1,
     });
 
+    const attendanceRecords = await Attendance.find({ student: req.params.id })
+
+    const totalAttendance = attendanceRecords.length;
+    const presentAttendance = attendanceRecords.filter((record) => record.status === "Present").length
+
+    const attendancePercentage = totalAttendance === 0 ? 0 : Number(((presentAttendance / totalAttendance) * 100).toFixed(2))
+
     const results = marks.map((record) => ({
       id: record.id,
       examType: record.examType,
@@ -38,9 +46,11 @@ const getStudentResults = async (req, res, next) => {
         name: student.name,
         classId: student.classId,
       },
+      attendancePercentage,
       results,
     });
-  } catch (error) {
+  }
+  catch (error) {
     next(error);
   }
 };
@@ -83,12 +93,43 @@ const getResults = async (req, res, next) => {
     res.status(200).json({
       results,
     });
-  } catch (error) {
+  }
+  catch (error) {
     next(error);
   }
 };
 
-module.exports = {
-  getResults,
-  getStudentResults,
-};
+const getResultById = async (req, res, next) => {
+    try {
+        const result = await Marks.findById(req.params.id).populate("student", `
+                studentId
+                name
+                classId
+                photo
+                gender
+                dob
+                parentName
+                parentContact
+                mobile
+                address
+                `
+            );
+
+        if (!result) {
+            res.status(404);
+            throw new Error("Result not found.");
+        }
+
+        const attendance = await Attendance.find({ student: result.student._id })
+        const present = attendance.filter(item => item.status === "Present").length
+        const attendancePercentage = attendance.length === 0 ? 0 : Number((present / attendance.length) * 100).toFixed(2);
+        res.status(200).json({
+            result: { ...result.toJSON(), attendancePercentage, ...calculateResult(result.subjects) }
+        });
+    }
+    catch (error) {
+        next(error)
+    }
+}
+
+module.exports = { getResults, getStudentResults, getResultById }

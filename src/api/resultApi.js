@@ -1,4 +1,4 @@
-import{ apiGet } from"./api";
+import { apiGet } from "./api";
 
 export const getResults=(filters={})=>{
     const params=new URLSearchParams();
@@ -16,4 +16,6 @@ export const getResults=(filters={})=>{
     return apiGet(query ?`/results?${query}` :"/results");
 }
 
-export const getStudentResults=id => apiGet(`/results/student/${id}`)
+export const getStudentResults = (id) => apiGet(`/results/student/${id}`);
+export const getStudentReportCard = (id) => apiGet(`/results/student/${id}`);
+export const getResultById = (id) => apiGet(`/results/${id}`);

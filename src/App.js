@@ -11,7 +11,7 @@ import AttendanceRecords from "./pages/admin/attendance/AttendanceRecords";
 import AddMarks from "./pages/admin/marks/AddMarks";
 import MarksList from "./pages/admin/marks/MarksList";
 import MarksDetails from "./pages/admin/marks/MarksDetails";
-import Results from "./pages/admin/marks/Results";
+import AdminResults from "./pages/admin/results/AdminResults";
 import MySubjects from "./pages/student/MySubjects";
 import MyAttendance from "./pages/student/MyAttendance";
 import MyResults from "./pages/student/MyResults";
@@ -32,6 +32,7 @@ import TeacherAttendance from "./pages/teacher/TeacherAttendance";
 import TeacherMarks from "./pages/teacher/TeacherMarks";
 import TeacherProfile from "./pages/teacher/TeacherProfile";
 import TeacherAnnouncements from "./pages/teacher/TeacherAnnouncements";
+import AdminReportCard from "./pages/admin/results/AdminReportCard";
 
 function App() {
   const adminRoute = (element) => (
@@ -67,7 +68,7 @@ function App() {
         <Route path="/admin/marks" element={adminRoute( <AddMarks /> )} />
         <Route path="/admin/marks/list" element={adminRoute( <MarksList /> )} />
         <Route path="/admin/marks/details/:studentId/:subjectId" element={adminRoute( <MarksDetails /> )} />
-        <Route path="/admin/results" element={adminRoute( <Results /> )} />
+        <Route path="/admin/results" element={adminRoute( <AdminResults /> )} />
         <Route path="/admin/report-cards" element={adminRoute( <ReportCards /> )} />
         <Route path="/admin/report-card/:studentId" element={adminRoute( <ReportCardDetails /> )} />
         <Route path="/admin/academic-years" element={adminRoute( <AcademicYears /> )} />
@@ -75,6 +76,8 @@ function App() {
         <Route path="/admin/teachers/add" element={adminRoute( <AddTeacher /> )} />
         <Route path="/admin/teachers/:id" element={adminRoute( <AdminTeacherProfile /> )} />
         <Route path="/admin/announcements" element={adminRoute( <Announcements /> )} />
+        <Route path="/admin/results" element={adminRoute( <AdminResults /> )} />
+        <Route path="/admin/report-card/:id" element={adminRoute( <AdminReportCard/> )} />
 
         <Route path="/student" element={studentRoute( <StudentDashboard /> )} />
         <Route path="/student/home" element={studentRoute( <StudentDashboard /> )} />
