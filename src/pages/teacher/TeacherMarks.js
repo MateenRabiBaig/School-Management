@@ -7,6 +7,7 @@ import { Classes, Subjects } from "../../data/data";
 import { getMyTeacherProfile } from "../../api/teacherApi";
 import { getStudents } from "../../api/studentApi";
 import { saveMarks } from "../../api/marksApi";
+import { getActiveAcademicYear } from "../../api/academicYearApi";
 import getNavbarUser from "../../utils/getNavbarUser";
 import { toast } from "react-toastify";
 
@@ -18,7 +19,7 @@ function TeacherMarks() {
   const [selectedStudent, setSelectedStudent] = useState("");
   const [studentData, setStudentData] = useState(null);
   const [examType, setExamType] = useState("Test 1");
-  const [academicYear, setAcademicYear] = useState("2026-27");
+  const [academicYear, setAcademicYear] = useState(null);
   const [remarks, setRemarks] = useState("");
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -43,6 +44,15 @@ function TeacherMarks() {
     }
 
     loadTeacher();
+  }, []);
+
+  useEffect(() => {
+    async function loadActiveYear() {
+      const activeYear = await getActiveAcademicYear();
+      setAcademicYear(activeYear?.name || null);
+    }
+
+    loadActiveYear();
   }, []);
 
   useEffect(() => {
@@ -212,12 +222,9 @@ function TeacherMarks() {
               <option value="Final">Final</option>
             </select>
 
-            <input
-              type="text"
-              value={academicYear}
-              onChange={(event) => setAcademicYear(event.target.value)}
-              placeholder="Academic Year"
-            />
+            <div className="panel">
+              Academic Year: {academicYear || "Loading..."}
+            </div>
 
             <textarea
               placeholder="Remarks"

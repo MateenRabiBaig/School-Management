@@ -6,6 +6,7 @@ import Navbar from "../../../components/Navbar";
 import { Classes, Subjects } from "../../../data/data";
 import { getStudents, getStudentById } from "../../../api/studentApi";
 import { getMarksById, saveMarks } from "../../../api/marksApi";
+import { getActiveAcademicYear } from "../../../api/academicYearApi";
 import getNavbarUser from "../../../utils/getNavbarUser";
 import { toast } from "react-toastify";
 
@@ -16,7 +17,7 @@ function AddMarks() {
   const [selectedStudent, setSelectedStudent] = useState("");
   const [studentData, setStudentData] = useState(null);
   const [examType, setExamType] = useState("");
-  const [academicYear, setAcademicYear] = useState("2026-27");
+  const [academicYear, setAcademicYear] = useState(null);
   const [remarks, setRemarks] = useState("");
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -65,6 +66,19 @@ function AddMarks() {
   }
 
   useEffect(() => {
+    async function loadActiveYear() {
+      if (editId) {
+        return;
+      }
+
+      const activeYear = await getActiveAcademicYear();
+      setAcademicYear(activeYear?.name || null);
+    }
+
+    loadActiveYear();
+  }, [editId]);
+
+  useEffect(() => {
     if (!studentData) {
       setSubjects([]);
       return;
@@ -108,7 +122,7 @@ function AddMarks() {
         setSelectedClass(marksData.student?.classId ? String(marksData.student.classId) : "");
         setSelectedStudent(marksData.student?._id || marksData.student?.id || "");
         setExamType(marksData.examType || "");
-        setAcademicYear(marksData.academicYear || "2026-27");
+        setAcademicYear(marksData.academicYear || null);
         setRemarks(marksData.remarks || "");
         setStudentData(marksData.student || null);
         setSubjects(
@@ -233,12 +247,9 @@ function AddMarks() {
               <option value="Final">Final</option>
             </select>
 
-            <input
-              type="text"
-              value={academicYear}
-              onChange={(event) => setAcademicYear(event.target.value)}
-              placeholder="Academic Year"
-            />
+            <div className="panel">
+              Academic Year: {academicYear || "Loading..."}
+            </div>
 
             <textarea
               placeholder="Remarks"

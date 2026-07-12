@@ -21,6 +21,7 @@ import ReportCardDetails from "./pages/admin/ReportCardDetails";
 import MyReportCard from "./pages/student/MyReportCard";
 import Announcements from "./pages/admin/Announcements";
 import StudentAnnouncements from "./pages/student/StudentAnnouncements";
+import AcademicYears from "./pages/admin/academic-years/AcademicYears";
 import TeacherList from "./pages/admin/teachers/TeacherList";
 import AddTeacher from "./pages/admin/teachers/AddTeacher";
 import AdminTeacherProfile from "./pages/admin/teachers/TeacherProfile";
@@ -69,6 +70,7 @@ function App() {
         <Route path="/admin/results" element={adminRoute( <Results /> )} />
         <Route path="/admin/report-cards" element={adminRoute( <ReportCards /> )} />
         <Route path="/admin/report-card/:studentId" element={adminRoute( <ReportCardDetails /> )} />
+        <Route path="/admin/academic-years" element={adminRoute( <AcademicYears /> )} />
         <Route path="/admin/teachers" element={adminRoute( <TeacherList /> )}/>
         <Route path="/admin/teachers/add" element={adminRoute( <AddTeacher /> )} />
         <Route path="/admin/teachers/:id" element={adminRoute( <AdminTeacherProfile /> )} />

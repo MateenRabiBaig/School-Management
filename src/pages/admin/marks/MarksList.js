@@ -5,6 +5,7 @@ import Sidebar from "../../../components/Sidebar";
 import Navbar from "../../../components/Navbar";
 import { Classes, Subjects } from "../../../data/data";
 import { deleteMarks, getMarks } from "../../../api/marksApi";
+import { getActiveAcademicYear } from "../../../api/academicYearApi";
 import getNavbarUser from "../../../utils/getNavbarUser";
 import { toast } from "react-toastify";
 
@@ -17,6 +18,17 @@ function MarksList() {
   const [studentSearch, setStudentSearch] = useState("");
   const navigate = useNavigate();
   const navbarUser = getNavbarUser();
+
+  useEffect(() => {
+    async function loadActiveYear() {
+      const activeYear = await getActiveAcademicYear();
+      if (activeYear?.name) {
+        setAcademicYear(activeYear.name);
+      }
+    }
+
+    loadActiveYear();
+  }, []);
 
   useEffect(() => {
     async function loadMarks() {

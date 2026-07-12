@@ -67,6 +67,13 @@ export const apiPut = (endpoint,body) => {
     })
 }
 
+export const apiPatch = (endpoint, body) => {
+    return apiRequest(endpoint, {
+        method: "PATCH",
+        body: body instanceof FormData ? body : JSON.stringify(body)
+    })
+}
+
 export const apiDelete = (endpoint) => {
     return apiRequest(endpoint,{
         method: "DELETE",
