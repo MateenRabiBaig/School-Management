@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { Plus, Pencil, Trash2, Search, X, Megaphone } from "lucide-react";
-import Sidebar from "../../../components/Sidebar";
-import Navbar from "../../../components/Navbar";
-import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from "../../../api/announcementApi";
-import getNavbarUser from "../../../utils/getNavbarUser";
+import Sidebar from "../../components/Sidebar";
+import Navbar from "../../components/Navbar";
+import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from "../../api/announcementApi";
+import getNavbarUser from "../../utils/getNavbarUser";
 
 function AdminAnnouncements() {
   const navbarUser = getNavbarUser();

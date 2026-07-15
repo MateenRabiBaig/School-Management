@@ -1114,3 +1114,11 @@ tr:nth-child(even) {
   gap:10px;
   color:#6b7280;
 }
+
+.panel select {
+  padding:10px 14px;
+  border:1px solid #d1d5db;
+  border-radius:8px;
+  margin-top:10px;
+  min-width:220px;
+}

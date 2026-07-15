@@ -1,5 +1,8 @@
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase/firebase";
+import { toast } from "react-toastify";
+import getNavbarUser from "../../utils/getNavbarUser";
+import { getMyStudentProfile } from "../../api/studentApi";
+import { getStudentResults } from "../../api/resultApi";
+import { calculateResult } from "../../utils/resultUtils";
 import { Classes, Subjects } from "../../data/data";
 import Sidebar from "../../components/Sidebar";
 import { useEffect, useState } from "react";
@@ -7,81 +10,50 @@ import Navbar from "../../components/Navbar";
 
 function MyReportCard() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
-    const studentId = localStorage.getItem("studentId");
+    const navbarUser = getNavbarUser();
     const [student, setStudent] = useState(null);
-    const [marks, setMarks] = useState([]);
+    const [results, setResults] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    async function getData() {
-        const studentSnapshot = await getDocs(collection(db,"students"));
-        studentSnapshot.forEach(doc => {
-            if(doc.id === studentId) {
-                setStudent({
-                    firebaseId: doc.id,
-                    ...doc.data()
-                });
-            }
-        });
+    async function loadReportCard() {
 
-        const marksSnapshot = await getDocs(collection(db,"marks"));
-        const temp = [];
-        marksSnapshot.forEach(doc => {
-            const data = doc.data();
-            if(data.studentId === studentId) {
-                temp.push(data);
-            }
-        });
-        setMarks(temp);
+        try {
+            setLoading(true);
+            const profileResponse = await getMyStudentProfile();
+            const currentStudent = profileResponse.student;
+            setStudent(currentStudent);
+            const resultResponse = await getStudentResults(currentStudent.id);
+            setResults(resultResponse.results || []);
+        }
+        catch (error) {
+            toast.error(error.message);
+        }
+        finally {
+            setLoading(false);
+        }
     }
 
     useEffect(()=> {
-        getData();
+        loadReportCard();
     },[]);
 
-    function getGrade(percentage) {
-        if(percentage >= 90) return "A+";
-        if(percentage >= 80) return "A";
-        if(percentage >= 70) return "B";
-        if(percentage >= 60) return "C";
-        if(percentage >= 50) return "D";
+    if (loading) {
 
-        return "F";
-    }
-
-    const weights = {
-        "Test 1" : 10,
-        "Test 2" : 10,
-        "Test 3" : 10,
-        "Midterm" : 30,
-        "Final Exam" : 40
-    };
-
-    const groupedMarks = {};
-
-    marks.forEach(item => {
-        if(!groupedMarks[item.subjectId]){
-            groupedMarks[item.subjectId] = [];
-        }
-        groupedMarks[item.subjectId].push(item);
-    });
-
-    let overallPercentage = 0;
-    let subjectCount = 0;
-
-    Object.keys(groupedMarks).forEach(subjectId => {
-        let percentage = 0;
-
-        groupedMarks[subjectId].forEach(item => {
-            percentage +=(Number(item.marks) * weights[item.examType]) / 100;
-        });
-
-        overallPercentage += percentage;
-        subjectCount++;
-    });
-
-    overallPercentage = subjectCount ? overallPercentage / subjectCount : 0;
-
-    if(!student){
-        return <h2>Loading Details</h2>;
+        return (
+            <div className="wrapper">
+                <Sidebar isOpen={sidebarOpen} />
+                <div className="main">
+                    <Navbar
+                        title="Report Card"
+                        user={navbarUser}
+                        onToggleSidebar={() =>
+                            setSidebarOpen(prev => !prev)
+                        }
+                    />
+                    <div className="panel">Loading Report Card...</div>
+                </div>
+            </div>
+        );
     }
 
     const classData =
@@ -108,46 +80,48 @@ function MyReportCard() {
                     <p>Parent : {" "} {student.parentName}</p>
                     <p>Admission Date : {" "} {student.admissionDate}</p>
                 </div>
-                {Object.keys(groupedMarks).map(
-                        subjectId => {
-                            const subjectMarks = groupedMarks[subjectId];
-
-                            let percentage = 0;
-                            subjectMarks.forEach(
-                                item => { percentage +=(Number(item.marks) * weights[item.examType]) /100; }
-                            );
-
-                            return (
-                                <div className="result-card" key={subjectId}>
-                                    <h3>{Subjects.find(s => s.id === Number(subjectId))?.name}</h3>
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Exam</th>
-                                                <th>Marks</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {subjectMarks.map((item,index) => (
-                                                        <tr key={index}>
-                                                            <td>{item.examType}</td>
-                                                            <td>{item.marks}</td>
-                                                        </tr>
-                                                    )
-                                                )
-                                            }
-                                        </tbody>
-                                    </table>
-                                    <p>Percentage : {" "} {percentage.toFixed(2)}%</p>
-                                    <p>Grade : {" "} {getGrade(percentage)}</p>
-                                </div>
-                            );
-                        }
-                    )
-                }
+                {results.length === 0 ? (
+                    <div className="panel">No report card available</div>
+                ) : (
+                    results.map(result => {
+                        const summary = calculateResult(result.subjects);
+                        return (
+                        <div className="result-card" key={result.id}>
+                            <h3>{result.examType}</h3>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>Marks</th>
+                                        <th>Maximum</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {result.subjects.map(subject => (
+                                        <tr key={subject.subjectId}>
+                                            <td>{Subjects.find(s => s.id === subject.subjectId)?.name}</td>
+                                            <td>{subject.marks}</td>
+                                            <td>{subject.maxMarks}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            
+                            <div className="summary-box">
+                                <p>Total : {" "} {summary.obtained} / {summary.total}</p>
+                                <p>Percentage : {" "} {summary.percentage}%</p>
+                                <p>Grade : {" "} {summary.grade}</p>
+                                <p>Status : {" "} {summary.status}</p>
+                            </div>
+                        </div>
+                    );
+                }))}
                 <div className="summary-box">
-                    <h3>Overall Percentage : {" "} {overallPercentage.toFixed(2)}%</h3>
-                    <h3>Overall Grade : {" "} {getGrade(overallPercentage)}</h3>
+                    <h3>Student Information</h3>
+                    <p>Name : {" "} {student.name}</p>
+                    <p>Class : {" "} {Classes.find(item => item.id === student.classId)?.name}</p>
+                    <p>Parent : {" "} {student.parentName}</p>
+                    <p>Admission Date : {" "} {student.admissionDate ? new Date(student.admissionDate).toLocaleDateString() : "-"}</p>
                 </div>
             </div>
         </div>

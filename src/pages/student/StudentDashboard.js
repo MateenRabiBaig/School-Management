@@ -1,58 +1,62 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import Sidebar from "../../components/Sidebar";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase/firebase";
-import { Classes, Subjects } from "../../data/data";
 import Navbar from "../../components/Navbar";
+import { Classes, Subjects } from "../../data/data";
+import getNavbarUser from "../../utils/getNavbarUser";
+import { getMyStudentProfile } from "../../api/studentApi";
+import { getStudentAttendance } from "../../api/attendanceApi";
+import { getStudentResults } from "../../api/resultApi";
 
 function StudentDashboard() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [student, setStudent] = useState(null);
     const [attendance, setAttendance] = useState([]);
-    const [marks, setMarks] = useState([]);
+    const [results, setResults] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const navbarUser = getNavbarUser();
 
-    async function getData() {
-        const studentId = localStorage.getItem("studentId");
-        const studentsData = await getDocs(collection(db, "students"));
-
-        studentsData.forEach((doc) => {
-            if (doc.id === studentId) {
-                setStudent({
-                    firebaseId: doc.id,
-                    ...doc.data()
-                });
-            }
-        });
-
-        const attendanceData = await getDocs(collection(db, "attendance"));
-        const tempAttendance = [];
-
-        attendanceData.forEach((doc) => {
-            const data = doc.data();
-            if (data.studentId === studentId) {
-                tempAttendance.push(data);
-            }
-        });
-
-        setAttendance(tempAttendance);
-        const marksData = await getDocs(collection(db, "marks"));
-        const tempMarks = [];
-
-        marksData.forEach((doc) => {
-            const data = doc.data();
-            if (data.studentId === studentId) {
-                tempMarks.push(data);
-            }
-        });
-        setMarks(tempMarks);
+    async function loadDashboard() {
+    
+        try {
+        setLoading(true);
+        const profileResponse = await getMyStudentProfile();
+        const currentStudent = profileResponse.student;
+        setStudent(currentStudent);
+        const attendanceResponse = await getStudentAttendance(currentStudent.id);
+        setAttendance(attendanceResponse.attendance || []);
+        const resultResponse = await getStudentResults(currentStudent.id);
+        setResults(resultResponse.results || []);
+        }
+        catch (error) {
+            toast.error(error.message);
+        }
+        finally {
+            setLoading(false);
+        }
     }
 
     useEffect(() => {
-        getData();
+        loadDashboard();
     }, []);
 
-    if (!student) {
-        return <h2>Loading...</h2>;
+    if (loading) {
+
+        return (
+            <div className="wrapper">
+                <Sidebar isOpen={sidebarOpen} />
+                <div className="main">
+                    <Navbar
+                        title="Dashboard"
+                        user={navbarUser}
+                        onToggleSidebar={() =>
+                            setSidebarOpen(prev => !prev)
+                        }
+                    />
+                    <div className="panel">Loading dashboard...</div>
+                </div>
+            </div>
+        );
     }
 
     const presentCount = attendance.filter(item => item.status === "Present").length;
@@ -97,8 +101,9 @@ function StudentDashboard() {
 
                 <div className="summary-box">
                     <h3>Latest Marks</h3>
-                    {marks.slice(-5).map((item,index)=>(
-                        <p key={index}>{getSubjectName(item.subjectId)} {" : "} {item.marks}</p>
+                    {results.slice(0,1).map(result => (result.subjects.map(subject => (
+                        <p key={subject.subjectId}>{getSubjectName(subject.subjectId)} {" : "} {subject.marks}</p>
+                    ))
                     ))}
                 </div>
             </div>
