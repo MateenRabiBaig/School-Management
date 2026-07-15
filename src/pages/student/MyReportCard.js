@@ -7,6 +7,7 @@ import { Classes, Subjects } from "../../data/data";
 import Sidebar from "../../components/Sidebar";
 import { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
+import ReportCardPDF from "../../components/reportCard/ReportCardPDF";
 
 function MyReportCard() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -14,6 +15,7 @@ function MyReportCard() {
     const [student, setStudent] = useState(null);
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
+    const reportData = { student, results, className: Classes.find(item => item.id === student.classId)?.name || "", schoolName: "ABC School", generatedOn: new Date() };
 
     async function loadReportCard() {
 
@@ -66,12 +68,7 @@ function MyReportCard() {
                 <Navbar title="Report Card" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
                 <div className="report-card-header">
                     <h2 className="report-card-title">Report Card</h2>
-                    <button
-                        onClick={()=>window.print()}
-                        className="report-card-print"
-                    >
-                        Print / Export
-                    </button>
+                    <ReportCardPDF report={reportData} />
                 </div>
                 <div className="summary-box">
                     <h3>Student Information</h3>
