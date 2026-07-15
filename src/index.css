@@ -971,3 +971,146 @@ tr:nth-child(even) {
   gap:10px;
   color:#888;
 }
+
+.form-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:18px;
+}
+
+.form-group {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding:10px;
+  border:1px solid #d1d5db;
+  border-radius:8px;
+  font-size:14px;
+}
+
+.checkbox {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:500;
+}
+
+.table-toolbar {
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:20px;
+}
+
+.announcement-list {
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.announcement-card {
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:20px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05);
+}
+
+.announcement-top {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:12px;
+}
+
+.announcement-date {
+  font-size:13px;
+  color:#6b7280;
+  margin-top:4px;
+}
+
+.announcement-description {
+  margin:15px 0;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+
+.announcement-actions {
+  display:flex;
+  gap:10px;
+}
+
+.btn-icon {
+  width:38px;
+  height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  background:#f3f4f6;
+}
+
+.btn-icon.delete {
+  background:#fee2e2;
+  color:#b91c1c;
+}
+
+.announcement-footer {
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.badge {
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:600;
+}
+
+.badge.active {
+  background:#dcfce7;
+  color:#166534;
+}
+
+.badge.inactive {
+  background:#fee2e2;
+  color:#b91c1c;
+}
+
+.badge.students {
+  background:#dbeafe;
+  color:#1d4ed8;
+}
+
+.badge.teachers {
+  background:#ede9fe;
+  color:#6d28d9;
+}
+
+.badge.all {
+  background:#fef3c7;
+  color:#92400e;
+}
+
+.badge.role {
+  background:#f3f4f6;
+  color:#374151;
+}
+
+.empty-state {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:50px;
+  gap:10px;
+  color:#6b7280;
+}
