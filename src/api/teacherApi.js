@@ -43,3 +43,7 @@ export const updateTeacher = (teacherId, teacherData) => {
 export const deleteTeacher = (teacherId) => {
   return apiDelete(`/teachers/${teacherId}`);
 };
+
+export const getTeacherClasses = () => {
+  return apiGet("/teachers/classes")
+}

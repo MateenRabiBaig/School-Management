@@ -78,6 +78,8 @@ console.log("Found user:", user);
 
 const authorize = (...allowedRoles) => {
     return (req,res,next) => {
+        console.log("req.userRole =", req.userRole);
+        console.log("allowedRoles =", allowedRoles);
         if(!allowedRoles.includes(req.userRole)) {
             res.status(403)
             return next(new Error("Not Authorized to Access this Resource"))

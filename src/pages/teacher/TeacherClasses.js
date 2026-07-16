@@ -1,34 +1,55 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import Sidebar from "../../components/Sidebar";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase/firebase";
-import { Classes, Subjects } from "../../data/data";
 import Navbar from "../../components/Navbar";
+import { Classes, Subjects } from "../../data/data";
+import { getTeacherClasses } from "../../api/teacherApi";
+import getNavbarUser from "../../utils/getNavbarUser";
 
 function TeacherClasses() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [teacher, setTeacher] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [assignedClasses, setAssignedClasses] = useState([]);
+    const [assignedSubjects, setAssignedSubjects] = useState([]);
+    const navbarUser = getNavbarUser();
+    const storedUser = JSON.parse(localStorage.getItem("user"));
 
-    async function loadTeacher() {
-        const teacherId = localStorage.getItem("teacherId");
-        const result = await getDocs(collection(db,"teachers"));
-
-        result.forEach(doc => {
-            if(doc.id === teacherId) {
-                setTeacher({
-                    firebaseId: doc.id,
-                    ...doc.data()
-                });
-            }
-        });
+    async function loadTeacherClasses() {
+        try {
+            setLoading(true);
+            const response = await getTeacherClasses();
+            setAssignedClasses(response.assignedClasses || []);
+            setAssignedSubjects(response.assignedSubjects || []);
+        }
+        catch (error) {
+            toast.error(error.message);
+        }
+        finally {
+            setLoading(false);
+        }
     }
 
     useEffect(()=>{
-        loadTeacher();
+        loadTeacherClasses();
     },[]);
 
-    if(!teacher) {
-        return <h2>Loading Details</h2>
+    if (loading) {
+        return (
+            <div className="wrapper">
+                <Sidebar isOpen={sidebarOpen} />
+                <div className="main">
+                    <Navbar
+                        title="My Classes"
+                        user={navbarUser}
+                        onToggleSidebar={() =>
+                            setSidebarOpen(prev => !prev)
+                        }
+                    />
+                    
+                    <div className="panel">Loading Classes...</div>
+                </div>
+            </div>
+        );
     }
 
 
@@ -36,21 +57,25 @@ function TeacherClasses() {
         <div className="wrapper">
             <Sidebar isOpen={sidebarOpen} />
             <div className="main">
-                <Navbar title="My Classes" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+                <Navbar title="My Classes" user={{ name: storedUser?.name || "User", role: storedUser?.role || "Teacher" }} onToggleSidebar={() => setSidebarOpen(prev => !prev)} />
 
                 <h2>My Classes</h2>
-                {teacher.classIds.map(
-                    classId => {
-                        const classData = Classes.find(c => c.id === classId);
-
-                        return (
-                            <div key={classId} className="class-card">
-                                <h3>{classData?.name}</h3>
-                                <p>Subjects: {" "} {teacher.subjectIds.map(id => Subjects.find(s => s.id === id)?.name).join(", ")}</p>
-                            </div>
-                        );
-                    }
-                )}
+                {assignedClasses.map(classId => {
+                    const classData = Classes.find(item => Number(item.id) === Number(classId));
+                    const subjectNames = assignedSubjects.map(subjectId => Subjects.find(subject => Number(subject.id) === Number(subjectId))?.name).filter(Boolean).join(", ");
+                    
+                    return (
+                        <div key={classId} className="class-card">
+                            <h3>{classData?.name}</h3>
+                            <p>
+                                <strong>Subjects:</strong>{" "} {subjectNames}
+                            </p>
+                            <p>
+                                <strong>Total Subjects:</strong>{" "} {assignedSubjects.length}
+                            </p>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     )

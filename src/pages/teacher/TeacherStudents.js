@@ -32,7 +32,7 @@ function TeacherStudents() {
                 ...doc.data()
             };
 
-            if(teacher.classIds.includes(student.classId)) {
+            if(teacher?.classIds.includes(student.classId)) {
                 temp.push(student);
             }
         });

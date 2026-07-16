@@ -12,7 +12,7 @@ const { protect, authorize } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.get("/", protect, authorize("admin"), getAcademicYears);
+router.get("/", protect, authorize("admin", "teacher"), getAcademicYears);
 router.post("/", protect, authorize("admin"), createAcademicYear);
 router.put("/:id", protect, authorize("admin"), updateAcademicYear);
 router.delete("/:id", protect, authorize("admin"), deleteAcademicYear);

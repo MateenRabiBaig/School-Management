@@ -8,7 +8,7 @@ export const uploadImage = async (file) => {
 };
 
 export const getTeacherDashboard = async => {
-    apiGet("teacher-dashboard")
+    apiGet("/teacher-dashboard")
 };
 
 export const getTeacherStudents = () => apiGet("/teachers/students");

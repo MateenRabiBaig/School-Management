@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import Sidebar from "../../components/Sidebar";
 import Navbar from "../../components/Navbar";
 import { Classes } from "../../data/data";
-import { getTeacherDashboard } from "../../api/teacherApi";
+import { getTeacherDashboard } from "../../api/uploadApi";
 import getNavbarUser from "../../utils/getNavbarUser";
 
 function TeacherDashboard() {
@@ -21,11 +21,11 @@ function TeacherDashboard() {
         try {
             setLoading(true);
             const response = await getTeacherDashboard();
-            setTeacher(response.teacher);
-            setStudents(response.students || []);
-            setAttendance(response.attendance || []);
-            setMarks(response.marks || []);
-            setLatestAnnouncement(response.latestAnnouncement || null);
+            setTeacher(response?.teacher);
+            setStudents(response?.students || []);
+            setAttendance(response?.attendance || []);
+            setMarks(response?.marks || []);
+            setLatestAnnouncement(response?.latestAnnouncement || null);
         }
         catch (error) {
             toast.error(error.message);
@@ -72,7 +72,7 @@ function TeacherDashboard() {
                 />
                 <div className="page-header">
                     <div>
-                        <h2>Welcome, {" "} {teacher.name}</h2>
+                        <h2>Welcome, {" "} {teacher?.name}</h2>
                         <p>Teacher Dashboard</p>
                     </div>
                 </div>
@@ -80,11 +80,11 @@ function TeacherDashboard() {
                 <div className="dashboard-grid">
                     <div className="dashboard-card">
                         <h3>Assigned Classes</h3>
-                        <h1>{teacher.assignedClasses.length}</h1>
+                        <h1>{teacher?.assignedClasses.length}</h1>
                     </div>
                     <div className="dashboard-card">
                         <h3>Assigned Subjects</h3>
-                        <h1>{teacher.assignedSubjects.length}</h1>
+                        <h1>{teacher?.assignedSubjects.length}</h1>
                     </div>
                     <div className="dashboard-card">
                         <h3>Total Students</h3>
@@ -100,7 +100,7 @@ function TeacherDashboard() {
                     </div>
                     <div className="dashboard-card">
                         <h3>Active Status</h3>
-                        <h1>{teacher.active ? "Active" : "Inactive"}</h1>
+                        <h1>{teacher?.active ? "Active" : "Inactive"}</h1>
                     </div>
                 </div>
                 <div
@@ -121,7 +121,7 @@ function TeacherDashboard() {
                                 </tr>
                             </thead>
                             <tbody>
-                                teacher.assignedClasses.map(classId => {
+                                {teacher?.assignedClasses.map(classId => {
                                     const classData = Classes.find(item => Number(item.id) === Number(classId));
                                     const totalStudents = students.filter(student => Number(student.classId) === Number(classId)).length;
                                     return (
@@ -130,7 +130,7 @@ function TeacherDashboard() {
                                             <td>{totalStudents}</td>
                                         </tr>
                                     );
-                                })
+                                })}
                             </tbody>
                         </table>
                     </div>
