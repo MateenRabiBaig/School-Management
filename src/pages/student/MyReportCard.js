@@ -65,7 +65,7 @@ function MyReportCard() {
         <div className="wrapper">
             <Sidebar isOpen={sidebarOpen} />
             <div className="main report-card-main">
-                <Navbar title="Report Card" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+                <Navbar title="Report Card" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
                 <div className="report-card-header">
                     <h2 className="report-card-title">Report Card</h2>
                     <ReportCardPDF report={reportData} />
@@ -113,13 +113,6 @@ function MyReportCard() {
                         </div>
                     );
                 }))}
-                <div className="summary-box">
-                    <h3>Student Information</h3>
-                    <p>Name : {" "} {student.name}</p>
-                    <p>Class : {" "} {Classes.find(item => item.id === student.classId)?.name}</p>
-                    <p>Parent : {" "} {student.parentName}</p>
-                    <p>Admission Date : {" "} {student.admissionDate ? new Date(student.admissionDate).toLocaleDateString() : "-"}</p>
-                </div>
             </div>
         </div>
     );

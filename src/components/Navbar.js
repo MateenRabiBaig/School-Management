@@ -30,9 +30,9 @@ function Navbar({ title, user, onToggleSidebar }) {
 
         <div className="profile">
           <img src={ photoUrl || "https://api.dicebear.com/10.x/thumbs/svg?seed=gv9jab1p" } alt={user?.name || "User"} />
-          <div>
-            <h4>{user?.name}</h4>
-            <p>{user?.role}</p>
+          <div className="profile-info">
+            <h4>{user?.name || "User"}</h4>
+            <p>{user?.email || "No email"}</p>
           </div>
         </div>
       </div>

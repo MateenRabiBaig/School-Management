@@ -4,11 +4,12 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase/firebase";
 import { Classes } from "../../data/data";
 import Navbar from "../../components/Navbar";
+import getNavbarUser from "../../utils/getNavbarUser";
 
 function TeacherStudents() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [students, setStudents] = useState([]);
-    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const navbarUser = getNavbarUser();
 
     async function loadStudents() {
         const teacherId = localStorage.getItem("teacherId");
@@ -49,7 +50,7 @@ function TeacherStudents() {
         <div className="wrapper">
             <Sidebar isOpen={sidebarOpen} />
             <div className="main">
-                <Navbar title="Dashboard" user={{ name: storedUser?.name || "User", role: storedUser?.role || "Student" }} onToggleSidebar={() => setSidebarOpen(prev => !prev)} />
+                <Navbar title="Students" user={navbarUser} onToggleSidebar={() => setSidebarOpen(prev => !prev)} />
 
                 <h2>Students</h2>
                 <table>

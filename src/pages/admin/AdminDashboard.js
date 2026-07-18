@@ -42,7 +42,7 @@ function AdminDashboard() {
         <div className="wrapper">
             <Sidebar isOpen={sidebarOpen} />
             <div className="main">
-                <Navbar title="Teachers" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+                <Navbar title="Admin Dashboard" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
 
                 <h2>Admin Dashboard</h2>
                 <div className="dashboard-grid">

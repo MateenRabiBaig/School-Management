@@ -34,7 +34,7 @@ function ReportCards() {
         <div className="wrapper">
             <Sidebar isOpen={sidebarOpen} />
             <div className="main">
-                <Navbar title="Teachers" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+                <Navbar title="Report Cards" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
 
                 <h2>Report Cards</h2>
 

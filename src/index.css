@@ -92,6 +92,9 @@ button:hover {
 
 .report-card-main {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .report-card-header {
@@ -120,6 +123,14 @@ button:hover {
 .report-card-print:hover {
   background: #e9cf36;
   opacity: 1;
+}
+
+.report-card-download {
+  display: inline-block;
+}
+
+.report-card-download button {
+  margin: 0;
 }
 
 .menu {
@@ -322,8 +333,8 @@ button:hover {
 }
 
 .student-top-fields {
-  display: grid;
-  grid-template-rows: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
@@ -607,6 +618,9 @@ tr:nth-child(even) {
   border-radius: 10px;
   padding: 20px;
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .result-card h3 {
@@ -639,6 +653,9 @@ tr:nth-child(even) {
 .summary-box{
     margin-top:25px;
     padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
 }
 
 .filter-container {
@@ -665,6 +682,9 @@ tr:nth-child(even) {
 .form-card{
   padding:20px;
   margin-bottom:20px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
 }
 
 .form-card textarea{
@@ -800,6 +820,7 @@ tr:nth-child(even) {
   align-items: center;
   gap: 12px;
   cursor: pointer;
+  min-width: 0;
 }
 
 .profile img {
@@ -807,6 +828,14 @@ tr:nth-child(even) {
   height: 34px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
 }
 
 .profile-avatar {
@@ -825,12 +854,20 @@ tr:nth-child(even) {
 .profile h4 {
   margin: 0;
   font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
 }
 
 .profile p {
   margin: 2px 0 0;
   color: #888;
   font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
 }
 
 @media (max-width: 900px) {
@@ -987,10 +1024,19 @@ tr:nth-child(even) {
 .form-group input,
 .form-group textarea,
 .form-group select {
-  padding:10px;
-  border:1px solid #d1d5db;
-  border-radius:8px;
-  font-size:14px;
+  padding: 10px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #1f1f1f;
+  color: #e5e5e5;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #c9a227;
 }
 
 .checkbox {

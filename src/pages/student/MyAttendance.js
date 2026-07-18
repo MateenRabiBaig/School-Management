@@ -126,43 +126,6 @@ function MyAttendance() {
 
 </div>
 
-<div className="panel">
-
-    <label>
-
-        Filter by Month
-
-    </label>
-
-    <select
-
-        value={selectedMonth}
-
-        onChange={e =>
-            setSelectedMonth(
-                e.target.value
-            )
-        }
-
-    >
-
-        {months.map(month => (
-
-            <option
-                key={month}
-                value={month}
-            >
-
-                {month}
-
-            </option>
-
-        ))}
-
-    </select>
-
-</div>
-
 {/* <div className="table-card">
 
     <table>

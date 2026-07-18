@@ -12,7 +12,6 @@ function TeacherClasses() {
     const [assignedClasses, setAssignedClasses] = useState([]);
     const [assignedSubjects, setAssignedSubjects] = useState([]);
     const navbarUser = getNavbarUser();
-    const storedUser = JSON.parse(localStorage.getItem("user"));
 
     async function loadTeacherClasses() {
         try {
@@ -57,7 +56,7 @@ function TeacherClasses() {
         <div className="wrapper">
             <Sidebar isOpen={sidebarOpen} />
             <div className="main">
-                <Navbar title="My Classes" user={{ name: storedUser?.name || "User", role: storedUser?.role || "Teacher" }} onToggleSidebar={() => setSidebarOpen(prev => !prev)} />
+                <Navbar title="My Classes" user={navbarUser} onToggleSidebar={() => setSidebarOpen(prev => !prev)} />
 
                 <h2>My Classes</h2>
                 {assignedClasses.map(classId => {

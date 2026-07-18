@@ -9,9 +9,14 @@ function ReportCardPDF({ report }) {
   return (
     <PDFDownloadLink
       document={<ReportCardDocument report={report} />}
-      fileName={`${report.student.studentId}_${report.examType}.pdf`}
+      fileName={`${report.student?.studentId || "student"}_${report.examType || "report"}.pdf`}
+      className="report-card-download"
     >
-      {({ loading }) => (loading ? "Generating..." : "Download Report Card")}
+      {({ loading }) => (
+        <button type="button" disabled={loading}>
+          {loading ? "Generating..." : "Download Report Card"}
+        </button>
+      )}
     </PDFDownloadLink>
   );
 }

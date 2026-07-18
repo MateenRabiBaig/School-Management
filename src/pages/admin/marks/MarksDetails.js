@@ -5,10 +5,12 @@ import { db } from "../../../firebase/firebase";
 import { Subjects } from "../../../data/data";
 import { useParams } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
+import getNavbarUser from "../../../utils/getNavbarUser";
 
 function MarksDetails() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const {studentId,subjectId} = useParams();
+    const navbarUser = getNavbarUser();
 
     const [student,setStudent] = useState(null);
 
@@ -70,7 +72,7 @@ function MarksDetails() {
         <div className="wrapper">
             <Sidebar isOpen={sidebarOpen} />
             <div className="main">
-                <Navbar title="Marks Details" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+                <Navbar title="Marks Details" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
 
                 <h2>Marks Details</h2>
                 <h3>Student : {" "} {student?.name}</h3>

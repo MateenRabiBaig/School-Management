@@ -68,7 +68,7 @@ function StudentDashboard() {
         <div className="wrapper">
             <Sidebar isOpen={sidebarOpen} />
             <div className="main">
-                <Navbar title="Dashboard" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+                <Navbar title="Dashboard" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
                 <div className="page-header">
                     <div>
                         <h2>Welcome, {" "} {student.name}</h2>

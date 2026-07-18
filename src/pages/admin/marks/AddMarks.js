@@ -248,7 +248,7 @@ function AddMarks() {
             </select>
 
             <div className="panel">
-              Academic Year: {academicYear || "Loading..."}
+              Academic Year: {academicYear || "No active academic year configured"}
             </div>
 
             <textarea

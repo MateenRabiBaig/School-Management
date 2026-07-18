@@ -42,9 +42,33 @@ function AddTeacher() {
       const currentClasses = previousForm.assignedClasses.map(Number);
       const assignedClasses = currentClasses.includes(classId) ? currentClasses.filter((id) => id !== classId) : [...currentClasses, classId];
 
-      return { ...previousForm, assignedClasses };
+      // Clear assigned subjects when classes change
+      const validSubjects = getSubjectsForClasses(assignedClasses);
+      const filteredSubjects = previousForm.assignedSubjects.filter(id => validSubjects.includes(id));
+
+      return { ...previousForm, assignedClasses, assignedSubjects: filteredSubjects };
     });
   }
+
+  function getSubjectsForClasses(classIds) {
+    const subjectSet = new Set();
+
+    classIds.forEach(classId => {
+      const classData = Classes.find(c => c.id === classId);
+      if (classData) {
+        // Add compulsory subjects
+        classData.compulsorySubjects.forEach(id => subjectSet.add(id));
+        // Add optional subjects
+        classData.optionalSubjects.forEach(group => {
+          group.subjects.forEach(id => subjectSet.add(id));
+        });
+      }
+    });
+
+    return Array.from(subjectSet);
+  }
+
+  const availableSubjects = getSubjectsForClasses(form.assignedClasses);
 
   function toggleSubject(subjectId) {
     setForm((previousForm) => {
@@ -159,21 +183,30 @@ function AddTeacher() {
 
           <div className="subject-block">
             <h3>Assigned Subjects</h3>
-
-            <div className="subject-columns">
-              <div>
-                {Subjects.map((subject) => (
-                  <label key={subject.id} className="subject-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={form.assignedSubjects.includes(subject.id)}
-                      onChange={() => toggleSubject(subject.id)}
-                    />
-                    {subject.name}
-                  </label>
-                ))}
+            {form.assignedClasses.length === 0 ? (
+              <p style={{ color: "#888", fontStyle: "italic" }}>Please select at least one class first</p>
+            ) : availableSubjects.length === 0 ? (
+              <p style={{ color: "#888", fontStyle: "italic" }}>No subjects available for selected classes</p>
+            ) : (
+              <div className="subject-columns">
+                <div>
+                  {availableSubjects.map((subjectId) => {
+                    const subject = Subjects.find((s) => s.id === subjectId);
+                    if (!subject) return null;
+                    return (
+                      <label key={subject.id} className="subject-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={form.assignedSubjects.includes(subject.id)}
+                          onChange={() => toggleSubject(subject.id)}
+                        />
+                        {subject.name}
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <button onClick={handleSubmit} disabled={saving}>
