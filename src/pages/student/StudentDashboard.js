@@ -15,6 +15,7 @@ function StudentDashboard() {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
     const navbarUser = getNavbarUser();
+    const storedUser = JSON.parse(localStorage.getItem("user"));
 
     async function loadDashboard() {
     
@@ -46,13 +47,7 @@ function StudentDashboard() {
             <div className="wrapper">
                 <Sidebar isOpen={sidebarOpen} />
                 <div className="main">
-                    <Navbar
-                        title="Dashboard"
-                        user={navbarUser}
-                        onToggleSidebar={() =>
-                            setSidebarOpen(prev => !prev)
-                        }
-                    />
+                    <Navbar title="Dashboard" user={navbarUser} onToggleSidebar={() => setSidebarOpen(prev => !prev)} />
                     <div className="panel">Loading dashboard...</div>
                 </div>
             </div>

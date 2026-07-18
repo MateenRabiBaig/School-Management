@@ -5,12 +5,15 @@ import { getStudentAttendance } from "../../api/attendanceApi";
 import { toast } from "react-toastify";
 import getNavbarUser from "../../utils/getNavbarUser";
 import { useMemo } from "react";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
 
 function MyAttendance() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [attendance, setAttendance] = useState([]);
   const navbarUser = getNavbarUser();
   const userId = navbarUser?.id;
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
     async function loadAttendance() {
@@ -48,6 +51,15 @@ function MyAttendance() {
   const absentCount = filteredAttendance.length - presentCount;
   const attendancePercentage = filteredAttendance.length === 0 ? 0 : (presentCount / filteredAttendance.length) * 100;
   const months = ["All", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  const attendanceMap = useMemo(() => {
+        const map = {};
+        attendance.forEach(item => {
+            const date = new Date(item.attendanceDate).toISOString().split("T")[0];
+            map[date] = item.status;
+        });
+        return map;
+    }, [attendance]);
 
   return (
     <div className="wrapper">
@@ -151,7 +163,7 @@ function MyAttendance() {
 
 </div>
 
-<div className="table-card">
+{/* <div className="table-card">
 
     <table>
 
@@ -237,8 +249,42 @@ function MyAttendance() {
         </tbody>
 
     </table>
+    </div> */}
+    <Calendar value={selectedDate} onChange={setSelectedDate} tileContent={({ date }) => {
+        const key = date.toISOString().split("T")[0];
+        const status = attendanceMap[key];
+        
+        if (status === "Present") {
+            return (
+                <div className="attendance-dot present" />
+            );
+        }
+        
+        if (status === "Absent") {
+            return (
+                <div className="attendance-dot absent" />
+            );
+        }
+        return null;
+    }}
+    tileClassName={({ date }) => {
+        const key = date.toISOString().split("T")[0];
+        if (attendanceMap[key] === "Present") {
+            return "attendance-present";
+        }
+        if (attendanceMap[key] === "Absent") {
+            return "attendance-absent";
+        }
+        return "";
+    }}
+    />
+
+    <div className="attendance-legend">
+        <div><span className="attendance-dot present"/>Present</div>
+        <div><span className="attendance-dot absent"/>Absent</div>
+        <div><span className="attendance-dot" style={{ background:"#9ca3af" }} />No Record</div>
     </div>
-      </div>
+    </div>
     </div>
   );
 }

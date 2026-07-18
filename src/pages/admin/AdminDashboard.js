@@ -4,11 +4,13 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase/firebase";
 import { Classes } from "../../data/data";
 import Navbar from "../../components/Navbar";
+import getNavbarUser from "../../utils/getNavbarUser";
 
 function AdminDashboard() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [students, setStudents] = useState([]);
     const [attendance, setAttendance] = useState([]);
+    const navbarUser = getNavbarUser();
 
     async function getData() {
         const studentsData = await getDocs(collection(db, "students"));
@@ -40,7 +42,7 @@ function AdminDashboard() {
         <div className="wrapper">
             <Sidebar isOpen={sidebarOpen} />
             <div className="main">
-                <Navbar title="Admin Dashboard" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+                <Navbar title="Teachers" user={navbarUser} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
 
                 <h2>Admin Dashboard</h2>
                 <div className="dashboard-grid">

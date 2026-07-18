@@ -15,7 +15,7 @@ function MyReportCard() {
     const [student, setStudent] = useState(null);
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
-    const reportData = { student, results, className: Classes.find(item => item.id === student.classId)?.name || "", schoolName: "ABC School", generatedOn: new Date() };
+    const reportData = { student, results, className: Classes.find(item => item.id === student?.classId)?.name || "", schoolName: "ABC School", generatedOn: new Date() };
 
     async function loadReportCard() {
 
@@ -59,7 +59,7 @@ function MyReportCard() {
     }
 
     const classData =
-        Classes.find(item => item.id === student.classId);
+        Classes.find(item => item.id === student?.classId);
 
     return (
         <div className="wrapper">

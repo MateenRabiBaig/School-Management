@@ -8,6 +8,7 @@ import Navbar from "../../components/Navbar";
 function TeacherStudents() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [students, setStudents] = useState([]);
+    const storedUser = JSON.parse(localStorage.getItem("user"));
 
     async function loadStudents() {
         const teacherId = localStorage.getItem("teacherId");
@@ -48,7 +49,7 @@ function TeacherStudents() {
         <div className="wrapper">
             <Sidebar isOpen={sidebarOpen} />
             <div className="main">
-                <Navbar title="Students" user={{ name: localStorage.getItem("user") || "User", role: (localStorage.getItem("role") || "").charAt(0).toUpperCase() + (localStorage.getItem("role") || "").slice(1) }} onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
+                <Navbar title="Dashboard" user={{ name: storedUser?.name || "User", role: storedUser?.role || "Student" }} onToggleSidebar={() => setSidebarOpen(prev => !prev)} />
 
                 <h2>Students</h2>
                 <table>

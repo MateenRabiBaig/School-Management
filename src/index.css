@@ -1122,3 +1122,140 @@ tr:nth-child(even) {
   margin-top:10px;
   min-width:220px;
 }
+
+/* ===== React Calendar Dark Theme ===== */
+
+.react-calendar {
+  width: 100%;
+  background: #2a2a2a;
+  color: #e5e5e5;
+  border: 1px solid #444;
+  border-radius: 12px;
+  padding: 16px;
+  font-family: "Roboto", "Open Sans", Arial, sans-serif;
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+}
+
+/* Navigation */
+.react-calendar__navigation {
+  margin-bottom: 12px;
+}
+
+.react-calendar__navigation button {
+  background: transparent;
+  color: #f5de49;
+  border: none;
+  min-width: 40px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+.react-calendar__navigation button:hover,
+.react-calendar__navigation button:focus {
+  background: #3a3a3a;
+}
+
+.react-calendar__navigation button:disabled {
+  color: #666;
+  background: transparent;
+}
+
+/* Weekday names */
+.react-calendar__month-view__weekdays {
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f5de49;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  padding: 10px 0;
+}
+
+.react-calendar__month-view__weekdays__weekday abbr {
+  text-decoration: none;
+}
+
+/* Calendar tiles */
+.react-calendar__tile {
+  background: transparent;
+  color: #e5e5e5;
+  border-radius: 8px;
+  padding: 12px 6px;
+  transition: all .2s;
+}
+
+.react-calendar__tile:hover {
+  background: #3a3a3a;
+}
+
+.react-calendar__tile:enabled:focus {
+  background: #444;
+}
+
+/* Today's date */
+.react-calendar__tile--now {
+  background: rgba(245, 222, 73, 0.15);
+  color: #f5de49;
+  font-weight: bold;
+}
+
+.react-calendar__tile--now:hover {
+  background: rgba(245, 222, 73, 0.25);
+}
+
+/* Selected day */
+.react-calendar__tile--active,
+.react-calendar__tile--active:hover {
+  background: #f5de49 !important;
+  color: #1e1e1e !important;
+  font-weight: bold;
+}
+
+/* Neighboring month dates */
+.react-calendar__month-view__days__day--neighboringMonth {
+  color: #666;
+}
+
+/* Attendance colors */
+.attendance-present {
+  background: rgba(22, 163, 74, .25) !important;
+  color: #4ade80 !important;
+  font-weight: 600;
+}
+
+.attendance-absent {
+  background: rgba(220, 38, 38, .25) !important;
+  color: #f87171 !important;
+  font-weight: 600;
+}
+
+/* Dots */
+.attendance-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin: 4px auto 0;
+}
+
+.attendance-dot.present {
+  background: #22c55e;
+}
+
+.attendance-dot.absent {
+  background: #ef4444;
+}
+
+/* Legend */
+.attendance-legend {
+  display: flex;
+  gap: 24px;
+  margin-top: 20px;
+  color: #e5e5e5;
+}
+
+.attendance-legend div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

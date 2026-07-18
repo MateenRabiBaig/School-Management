@@ -102,8 +102,7 @@ function Login() {
 
                 <br/>
 
-                <button onClick={handleLogin} style={{ width: "100%" }}>Login</button>
-                {loading ? "Loggin in..." : "Login"}
+                <button onClick={handleLogin} style={{ width: "100%" }}>{loading ? "Logging in..." : "Login"}</button>
             </div>
         </div>
     )
