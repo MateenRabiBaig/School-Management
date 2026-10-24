@@ -1,70 +1,213 @@
-# Getting Started with Create React App
+# School Management System
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack school management application for administrators, teachers, and students. It provides role-based access to student records, teacher assignments, attendance, marks, results, report cards, announcements, academic years, and profile data.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- JWT-based authentication for administrators, teachers, and students
+- Admin management of students, teachers, academic years, attendance, marks, and announcements
+- Teacher dashboards, class/student views, attendance marking, and marks entry
+- Student dashboards, attendance calendars, subjects, results, report cards, and announcements
+- Report card PDF generation
+- Image uploads through Cloudinary
+- MongoDB persistence through Mongoose
 
-### `npm start`
+## Technology
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Frontend: React, React Router, Create React App
+- Backend: Node.js, Express
+- Database: MongoDB
+- Authentication: JWT and bcryptjs
+- File storage: Cloudinary
+- Deployment: Vercel for the frontend and Render for the backend
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Project structure
 
-### `npm test`
+```text
+school-management/
+├── src/                 React frontend
+├── public/              Frontend public assets
+├── backend/             Express API and database models
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   └── scripts/
+├── package.json         Frontend dependencies and scripts
+└── backend/package.json Backend dependencies and scripts
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Requirements
 
-### `npm run build`
+- Node.js 18 or newer
+- npm
+- MongoDB database, local or MongoDB Atlas
+- Cloudinary account for image uploads
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Local setup
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Clone the repository and install dependencies for both applications:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+npm install
+cd backend
+npm install
+```
 
-### `npm run eject`
+Create a frontend `.env` file in the project root:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```env
+REACT_APP_API_URL=http://localhost:5000/api
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Create `backend/.env`:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```env
+PORT=5000
+NODE_ENV=development
+MONGO_URI=mongodb://127.0.0.1:27017/school-management
+JWT_SECRET=replace-with-a-long-random-secret
+JWT_EXPIRES_IN=1d
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Do not commit either `.env` file or real credentials.
 
-## Learn More
+## Running locally
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Start the backend in one terminal:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```bash
+cd backend
+npm start
+```
 
-### Code Splitting
+Start the frontend in another terminal:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```bash
+npm start
+```
 
-### Analyzing the Bundle Size
+The frontend runs at `http://localhost:3000` and the API runs at `http://localhost:5000`.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+For backend development with automatic restarts:
 
-### Making a Progressive Web App
+```bash
+cd backend
+npm run dev
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Initial administrator account
 
-### Advanced Configuration
+There is no public registration page. This is intentional: administrators create teacher and student accounts from the admin dashboard.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Create the initial administrator using the same `MONGO_URI` as the running backend:
 
-### Deployment
+```bash
+cd backend
+npm run seed:admin
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+The seed script creates:
 
-### `npm run build` fails to minify
+```text
+User ID: ADM001
+Password: admin123
+Role: Admin
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Change the default password or remove the default credentials before using the application in production.
+
+## API
+
+The backend API is mounted under `/api`.
+
+| Area | Base route |
+| --- | --- |
+| Authentication | `/api/auth` |
+| Students | `/api/students` |
+| Teachers | `/api/teachers` |
+| Attendance | `/api/attendance` |
+| Marks | `/api/marks` |
+| Results | `/api/results` |
+| Academic years | `/api/academic-years` |
+| Announcements | `/api/announcements` |
+| Uploads | `/api/upload` |
+| Health check | `/api/health` |
+
+The login endpoint is:
+
+```text
+POST /api/auth/login
+```
+
+## Deployment
+
+### Backend on Render
+
+Configure the Render service with `backend` as its root directory.
+
+```text
+Build Command: npm install
+Start Command: npm run seed:admin && node server.js
+```
+
+Add these environment variables in Render:
+
+```env
+PORT=10000
+NODE_ENV=production
+MONGO_URI=your-production-mongodb-uri
+JWT_SECRET=your-production-jwt-secret
+JWT_EXPIRES_IN=1d
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+```
+
+Render provides the `PORT` value automatically; do not hard-code a production port in the application.
+
+The seed command is included in the start command so the initial admin can be created without a paid shell. It checks whether `ADM001` already exists and does not create a duplicate on later deployments.
+
+### Frontend on Vercel
+
+Set the following Vercel environment variable before building:
+
+```env
+REACT_APP_API_URL=https://your-backend.onrender.com/api
+```
+
+The value must include `/api`. After changing it, redeploy the frontend because Create React App embeds `REACT_APP_*` variables during the build.
+
+Never use `localhost` as the production API URL.
+
+## Production checklist
+
+- Set `REACT_APP_API_URL` to the public Render API URL ending in `/api`.
+- Set `MONGO_URI` to the production MongoDB Atlas connection string.
+- Allow the Render service to connect in MongoDB Atlas Network Access.
+- Configure all Cloudinary credentials in Render.
+- Use a strong, unique `JWT_SECRET`.
+- Replace the default `ADM001` / `admin123` credentials.
+- Keep `.env` files and secrets out of Git.
+- Verify the health endpoint at `/api/health` after deployment.
+
+## Available scripts
+
+From the project root:
+
+```bash
+npm start       # Start the React development server
+npm run build   # Create the production frontend build
+npm test        # Run frontend tests
+```
+
+From `backend/`:
+
+```bash
+npm start       # Start the API server
+npm run dev     # Start the API with nodemon
+npm run seed:admin  # Create the initial administrator if absent
+```
