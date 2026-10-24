@@ -4,15 +4,6 @@ const getToken = () => {
     return localStorage.getItem("token")
 }
 
-const clearStoredAuth = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
-    localStorage.removeItem("role")
-    localStorage.removeItem("adminId")
-    localStorage.removeItem("teacherId")
-    localStorage.removeItem("studentId")
-}
-
 const apiRequest = async(endpoint,options={}) => {
     const token = getToken()
     const headers = {...options.headers}

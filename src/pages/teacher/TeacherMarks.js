@@ -66,6 +66,7 @@ function TeacherMarks() {
       }
 
       try {
+        setLoading(true);
         const response = await getStudents({
           classId: selectedClass,
         });
@@ -73,6 +74,8 @@ function TeacherMarks() {
         setStudents(response.students || []);
       } catch (error) {
         toast.error("Error loading students: " + error.message);
+      } finally {
+        setLoading(false);
       }
     }
 

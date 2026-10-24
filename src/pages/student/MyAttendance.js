@@ -35,23 +35,11 @@ function MyAttendance() {
 
   // const presentCount = attendance.filter((item) => item.status === "Present").length;
   // const attendancePercentage = attendance.length ? (presentCount / attendance.length) * 100 : 0;
-  const [selectedMonth, setSelectedMonth] = useState("All");
-  const filteredAttendance = useMemo(() => {
-    if (selectedMonth === "All") {
-      return attendance;
-    }
-
-    return attendance.filter(item => {
-      const month = new Date(item.attendanceDate).toLocaleString("default", { month: "long" });
-      return month === selectedMonth;
-    });
-  }, [attendance, selectedMonth]);
+  const filteredAttendance = attendance;
   
   const presentCount = filteredAttendance.filter(item => item.status === "Present").length;
   const absentCount = filteredAttendance.length - presentCount;
   const attendancePercentage = filteredAttendance.length === 0 ? 0 : (presentCount / filteredAttendance.length) * 100;
-  const months = ["All", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
   const attendanceMap = useMemo(() => {
         const map = {};
         attendance.forEach(item => {

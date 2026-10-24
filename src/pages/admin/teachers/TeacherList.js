@@ -49,7 +49,7 @@ function TeacherList() {
     if (!window.confirm("Delete this teacher?")) return;
     try {
       await deleteTeacher(id);
-      setTeachers((currentTeachers) => currentTeachers.filter((teacher) => teacher.id!=id))
+      setTeachers((currentTeachers) => currentTeachers.filter((teacher) => teacher.id !== id))
       toast.success("Teacher deleted successfully")
     }
     catch (error) {

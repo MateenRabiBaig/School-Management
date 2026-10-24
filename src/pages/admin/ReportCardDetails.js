@@ -1,14 +1,13 @@
 import { Classes, Subjects } from "../../data/data";
 import Sidebar from "../../components/Sidebar";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
 import { toast } from "react-toastify";
 import { getStudentById } from "../../api/studentApi";
 import { getStudentResults } from "../../api/resultApi";
 import { calculateResult } from "../../utils/resultUtils";
 import getNavbarUser from "../../utils/getNavbarUser";
-import ReportCardPDF from "../../components/reportCard/ReportCardPDF";
 
 function ReportCardDetails() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -18,7 +17,7 @@ function ReportCardDetails() {
     const [loading, setLoading] = useState(true);
     const navbarUser = getNavbarUser();
 
-    async function loadReportCard() {
+    const loadReportCard = useCallback(async () => {
         try {
             setLoading(true);
             const studentResponse = await getStudentById(studentId);
@@ -32,11 +31,11 @@ function ReportCardDetails() {
         finally {
             setLoading(false);
         }
-    }
+    }, [studentId]);
 
     useEffect(()=> {
         loadReportCard();
-    },[studentId]);
+    },[loadReportCard]);
 
     if (loading) {
         return (

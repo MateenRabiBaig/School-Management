@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Eye, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
@@ -8,7 +8,6 @@ import { getAcademicYears } from "../../../api/academicYearApi";
 import { Classes } from "../../../data/data";
 import getNavbarUser from "../../../utils/getNavbarUser";
 import { toast } from "react-toastify";
-import { prepareReportCard } from "../../../utils/reportCardUtils";
 
 function AdminResults() {
   const navigate = useNavigate();
@@ -24,13 +23,40 @@ function AdminResults() {
   const [search, setSearch] = useState("");
   const examTypes = ["Test 1", "Test 2", "Test 3", "Midterm", "Final"];
 
+  const loadAcademicYears = useCallback(async () => {
+    try {
+      const response = await getAcademicYears();
+      setAcademicYears(response.academicYears || []);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  }, []);
+
+  const loadResults = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const response = await getResults({
+        classId: selectedClass,
+        examType: selectedExam,
+        academicYear: selectedYear,
+      });
+
+      setResults(response.results || []);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedClass, selectedExam, selectedYear]);
+
   useEffect(() => {
     loadAcademicYears();
-  }, []);
+  }, [loadAcademicYears]);
 
   useEffect(() => {
     loadResults();
-  }, [selectedClass, selectedExam, selectedYear]);
+  }, [loadResults]);
 
   useEffect(() => {
     const keyword = search.toLowerCase();
@@ -48,33 +74,6 @@ function AdminResults() {
   const displayedResults = useMemo(() => {
     return search ? filteredResults : results;
   }, [results, filteredResults, search]);
-
-  async function loadAcademicYears() {
-    try {
-      const response = await getAcademicYears();
-      setAcademicYears(response.academicYears || []);
-    } catch (error) {
-      toast.error(error.message);
-    }
-  }
-
-  async function loadResults() {
-    try {
-      setLoading(true);
-
-      const response = await getResults({
-        classId: selectedClass,
-        examType: selectedExam,
-        academicYear: selectedYear,
-      });
-
-      setResults(response.results || []);
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   function getClassName(classId) {
     return Classes.find((item) => item.id === Number(classId))?.name || classId;
@@ -162,12 +161,6 @@ function AdminResults() {
 
               <tbody>
                 {displayedResults.map((item) => {
-                  const report = prepareReportCard({
-                    student: item.student,
-                    attendancePercentage: item.attendancePercentage,
-                    result: item,
-                  });
-
                   return (
                     <tr key={item.id}>
                       <td>

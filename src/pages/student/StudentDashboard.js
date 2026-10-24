@@ -15,7 +15,6 @@ function StudentDashboard() {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
     const navbarUser = getNavbarUser();
-    const storedUser = JSON.parse(localStorage.getItem("user"));
 
     async function loadDashboard() {
     

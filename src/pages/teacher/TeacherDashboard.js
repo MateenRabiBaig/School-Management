@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Sidebar from "../../components/Sidebar";
 import Navbar from "../../components/Navbar";
@@ -57,7 +57,7 @@ function TeacherDashboard() {
     }
 
     const teacherStudents = students;
-    const todayAttendance = attendance.filter(item => item.attendanceDate ?.slice(0, 10) === today);
+    const todayAttendance = attendance.filter(item => item.attendanceDate?.slice(0, 10) === today);
     const attendanceCompleted = teacherStudents.length > 0 && todayAttendance.length >= teacherStudents.length;
     const teacherMarks = marks;
 

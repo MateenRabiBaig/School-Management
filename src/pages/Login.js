@@ -11,22 +11,6 @@ function Login() {
     const [loading,setLoading] = useState(false)
     const navigate = useNavigate()
 
-    async function handleApiLogin() {
-        const response = await loginUser({userId, password, role})
-        saveAuth(response.token, response.user)
-        toast.success(`Welcome back ${response.user.name}`)
-
-        if(response.user.role === "admin") {
-            navigate("/admin")
-            return
-        }
-
-        if(response.user.role === "student") {
-            navigate("/student")
-            return
-        }
-    }
-
     async function handleLogin() {
         if(!role) {
             toast.error("Please select a role")

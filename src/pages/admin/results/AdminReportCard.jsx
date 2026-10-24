@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
 import Navbar from "../../../components/Navbar";
@@ -16,11 +16,7 @@ const [sidebarOpen, setSidebarOpen] = useState(true);
 const [report,setReport] = useState(null);
 const [loading,setLoading] = useState(true);
 
-useEffect(() => {
-    loadReport();
-}, [id]);
-
-async function loadReport() {
+const loadReport = useCallback(async () => {
     try {
         const response = await getResultById(id);
         setReport(prepareReportCard(
@@ -37,7 +33,11 @@ async function loadReport() {
     finally {
         setLoading(false);
     }
-}
+}, [id]);
+
+useEffect(() => {
+    loadReport();
+}, [loadReport]);
 
 // function AdminReportCard() {
     if (loading) {
